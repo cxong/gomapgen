@@ -4,7 +4,7 @@ import "github.com/cxong/gomapgen/gmgmap"
 
 func main() {
 	// make map
-	m := gmgmap.NewMap(80, 24)
+	m := gmgmap.NewRandomWalk(80, 24, 3000)
 	// print
 	m.Print()
 }
