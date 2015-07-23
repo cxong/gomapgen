@@ -48,7 +48,6 @@ func (m Map) ToTMX(template *TMXTemplate) error {
 			}
 			return nil
 		}
-		fmt.Printf("ext is %s\n", filepath.Ext(walkPath))
 		// Copy file, except for tmx (which we'll be generating)
 		if strings.ToLower(filepath.Ext(walkPath)) == ".tmx" {
 			return nil

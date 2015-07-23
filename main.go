@@ -1,10 +1,18 @@
 package main
 
-import "github.com/cxong/gomapgen/gmgmap"
+import (
+	"flag"
+
+	"github.com/cxong/gomapgen/gmgmap"
+)
 
 func main() {
+	width := flag.Int("width", 32, "map width")
+	height := flag.Int("height", 32, "map height")
+	iterations := flag.Int("iterations", 3000, "number of iterations for random walk algo")
+	flag.Parse()
 	// make map
-	m := gmgmap.NewRandomWalk(80, 24, 3000)
+	m := gmgmap.NewRandomWalk(*width, *height, *iterations)
 	// print
 	m.Print()
 	// export TMX
