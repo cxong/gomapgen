@@ -13,6 +13,7 @@ type Map struct {
 const (
 	nothing = ' '
 	floor   = 'f'
+	floor2  = 'F'
 	wall    = 'w'
 	room    = 'r'
 )

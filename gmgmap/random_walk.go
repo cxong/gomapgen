@@ -13,7 +13,7 @@ func NewRandomWalk(width, height, iterations int) *Map {
 	// Start walking from the middle, randomly
 	x, y := width/2, height/2
 	for i := 0; i < iterations; i++ {
-		m.SetTile(x, y, room)
+		m.SetTile(x, y, floor2)
 		x, y = nextDirection(m, x, y)
 	}
 	return m
