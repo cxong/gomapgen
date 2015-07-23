@@ -31,14 +31,28 @@ func NewMap(width, height int) *Map {
 	return m
 }
 
+// TileOutOfBounds - returned when trying to access a map tile that is out of
+// bounds
+type TileOutOfBounds struct {
+}
+
+func (e *TileOutOfBounds) Error() string { return "Tile out of bounds" }
+
 // GetTile - get tile at x, y
-func (m Map) GetTile(x, y int) byte {
-	return m.Tiles[x+y*m.Width]
+func (m Map) GetTile(x, y int) (byte, error) {
+	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
+		return 0, &TileOutOfBounds{}
+	}
+	return m.Tiles[x+y*m.Width], nil
 }
 
 // SetTile - set tile at x, y
-func (m Map) SetTile(x, y int, tile byte) {
+func (m Map) SetTile(x, y int, tile byte) error {
+	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
+		return &TileOutOfBounds{}
+	}
 	m.Tiles[x+y*m.Width] = tile
+	return nil
 }
 
 // Fill the map with a single tile type

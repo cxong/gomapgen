@@ -7,26 +7,41 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"text/template"
 )
 
 // TMXTemplate - configuration for TMX export
 type TMXTemplate struct {
-	path      string
-	nothingID int
-	floorID   int
-	floor2ID  int
-	wallID    int
-	roomID    int
-	Width     int
-	Height    int
-	CSV       string
+	path string
+	// Arrays of tile ids (16);
+	// first is centre,
+	// then 8 tiles from top clockwise,
+	// then h/v,
+	// then 4 end tiles from top clockwise,
+	// then isolated tile
+	nothingID string
+	floorIDs  []string
+	floor2IDs []string
+	wallID    string
+	roomIDs   []string
+
+	// Parameters used for template export
+	Width  int
+	Height int
+	CSV    string
 }
 
 // DawnLikeTemplate - using DawnLike tile set
-var DawnLikeTemplate = TMXTemplate{"dawnlike", 1043, 1176, 1421, 69, 1428, 0, 0, ""}
+var DawnLikeTemplate = TMXTemplate{
+	"dawnlike",
+	"1043",
+	[]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
+	[]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
+	// TODO: wall tile sets
+	"69",
+	[]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
+	0, 0, ""}
 
 // ToTMX - export map as TMX (Tiled XML map)
 func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
@@ -74,25 +89,9 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 	if err != nil {
 		return err
 	}
-	// Populate template
-	tmxTemplate.Width = m.Width
-	tmxTemplate.Height = m.Height
-	exportTiles := make([]string, len(m.Tiles))
-	for i := 0; i < len(m.Tiles); i++ {
-		switch m.Tiles[i] {
-		case nothing:
-			exportTiles[i] = strconv.Itoa(tmxTemplate.nothingID)
-		case floor:
-			exportTiles[i] = strconv.Itoa(tmxTemplate.floorID)
-		case floor2:
-			exportTiles[i] = strconv.Itoa(tmxTemplate.floor2ID)
-		case wall:
-			exportTiles[i] = strconv.Itoa(tmxTemplate.wallID)
-		case room:
-			exportTiles[i] = strconv.Itoa(tmxTemplate.roomID)
-		}
-	}
-	tmxTemplate.CSV = strings.Join(exportTiles, ",")
+
+	populateTemplate(m, tmxTemplate)
+
 	// Generate TMX
 	// Use template path as template name
 	t, err := template.ParseFiles(path.Join(baseDir, "template.tmx"))
@@ -105,4 +104,97 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 	}
 	t.Execute(templateFile, tmxTemplate)
 	return nil
+}
+
+func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
+	tmxTemplate.Width = m.Width
+	tmxTemplate.Height = m.Height
+	exportTiles := make([]string, len(m.Tiles))
+	for y := 0; y < m.Height; y++ {
+		for x := 0; x < m.Width; x++ {
+			tile, err := m.GetTile(x, y)
+			if err != nil {
+				panic(err)
+			}
+			var tileIDs []string
+			switch tile {
+			case nothing:
+				exportTiles[x+y*m.Width] = tmxTemplate.nothingID
+				continue
+			case floor:
+				tileIDs = tmxTemplate.floorIDs
+			case floor2:
+				tileIDs = tmxTemplate.floor2IDs
+			case wall:
+				exportTiles[x+y*m.Width] = tmxTemplate.wallID
+				continue
+			case room:
+				tileIDs = tmxTemplate.roomIDs
+			}
+			exportTiles[x+y*m.Width] = get16Tile(m, x, y, tile, tileIDs)
+		}
+	}
+	tmxTemplate.CSV = strings.Join(exportTiles, ",")
+}
+
+func get16Tile(m Map, x, y int, tile byte, templateTiles []string) string {
+	up := isSameTile(m, x, y-1, tile)
+	right := isSameTile(m, x+1, y, tile)
+	down := isSameTile(m, x, y+1, tile)
+	left := isSameTile(m, x-1, y, tile)
+	switch {
+	case up && right && down && left:
+		return templateTiles[0]
+	case !up && right && down && left:
+		// upper edge
+		return templateTiles[1]
+	case !up && !right && down && left:
+		// upper right corner
+		return templateTiles[2]
+	case up && !right && down && left:
+		// right edge
+		return templateTiles[3]
+	case up && !right && !down && left:
+		// bottom right corner
+		return templateTiles[4]
+	case up && right && !down && left:
+		// bottom edge
+		return templateTiles[5]
+	case up && right && !down && !left:
+		// bottom left corner
+		return templateTiles[6]
+	case up && right && down && !left:
+		// left edge
+		return templateTiles[7]
+	case !up && right && down && !left:
+		// upper left corner
+		return templateTiles[8]
+	case !up && right && !down && left:
+		// horizontal
+		return templateTiles[9]
+	case up && !right && down && !left:
+		// vertical
+		return templateTiles[10]
+	case !up && !right && down && !left:
+		// upper end
+		return templateTiles[11]
+	case !up && !right && !down && left:
+		// right end
+		return templateTiles[12]
+	case up && !right && !down && !left:
+		// bottom end
+		return templateTiles[13]
+	case !up && right && !down && !left:
+		// left end
+		return templateTiles[14]
+	case !up && !right && !down && !left:
+		// isolated
+		return templateTiles[15]
+	}
+	panic("unknown error")
+}
+
+func isSameTile(m Map, x, y int, tile byte) bool {
+	other, err := m.GetTile(x, y)
+	return err != nil || other == tile
 }
