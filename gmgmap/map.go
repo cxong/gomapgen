@@ -87,8 +87,3 @@ func (m Map) Print() {
 		fmt.Println()
 	}
 }
-
-// ToTMX - export map as TMX (Tiled XML map)
-func (m Map) ToTMX() {
-
-}
