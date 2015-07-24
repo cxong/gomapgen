@@ -23,7 +23,7 @@ type TMXTemplate struct {
 	nothingID string
 	floorIDs  []string
 	floor2IDs []string
-	wallID    string
+	wallIDs   []string
 	roomIDs   []string
 
 	// Parameters for map generation
@@ -44,8 +44,7 @@ var DawnLikeTemplate = TMXTemplate{
 	"1031",
 	[]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
 	[]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
-	// TODO: wall tile sets
-	"69",
+	[]string{"92", "72", "70", "93", "110", "112", "108", "91", "68", "69", "88", "88", "110", "89", "108", "71"},
 	[]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
 	false, true, true, true,
 	0, 0, ""}
@@ -141,12 +140,11 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 				}
 				tileIDs = tmxTemplate.floor2IDs
 			case wall:
-				/*if !tmxTemplate.wallTerrain {
+				if !tmxTemplate.wallTerrain {
 					exportTiles[x+y*m.Width] = tmxTemplate.wallIDs[0]
 					continue
-				}*/
-				exportTiles[x+y*m.Width] = tmxTemplate.wallID
-				continue
+				}
+				tileIDs = tmxTemplate.wallIDs
 			case room:
 				if !tmxTemplate.roomTerrain {
 					exportTiles[x+y*m.Width] = tmxTemplate.roomIDs[0]
