@@ -9,10 +9,11 @@ import (
 func main() {
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
-	iterations := flag.Int("iterations", 3000, "number of iterations for random walk algo")
+	//iterations := flag.Int("iterations", 3000, "number of iterations for random walk algo")
 	flag.Parse()
 	// make map
-	m := gmgmap.NewRandomWalk(*width, *height, *iterations)
+	//m := gmgmap.NewRandomWalk(*width, *height, *iterations)
+	m := gmgmap.NewRogue(*width, *height, 3, 15)
 	// print
 	m.Print()
 	// export TMX

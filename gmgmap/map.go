@@ -4,7 +4,7 @@ import "fmt"
 
 // Map - a rectangular tile map
 type Map struct {
-	Tiles  []byte
+	Tiles  []rune
 	Width  int
 	Height int
 }
@@ -23,11 +23,8 @@ func NewMap(width, height int) *Map {
 	m := new(Map)
 	m.Width = width
 	m.Height = height
-	for y := 0; y < m.Height; y++ {
-		for x := 0; x < m.Width; x++ {
-			m.Tiles = append(m.Tiles, nothing)
-		}
-	}
+	m.Tiles = make([]rune, m.Width*m.Height)
+	m.Fill(nothing)
 	return m
 }
 
@@ -39,7 +36,7 @@ type TileOutOfBounds struct {
 func (e *TileOutOfBounds) Error() string { return "Tile out of bounds" }
 
 // GetTile - get tile at x, y
-func (m Map) GetTile(x, y int) (byte, error) {
+func (m Map) GetTile(x, y int) (rune, error) {
 	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
 		return 0, &TileOutOfBounds{}
 	}
@@ -47,7 +44,7 @@ func (m Map) GetTile(x, y int) (byte, error) {
 }
 
 // SetTile - set tile at x, y
-func (m Map) SetTile(x, y int, tile byte) error {
+func (m Map) SetTile(x, y int, tile rune) error {
 	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
 		return &TileOutOfBounds{}
 	}
@@ -56,7 +53,7 @@ func (m Map) SetTile(x, y int, tile byte) error {
 }
 
 // Fill the map with a single tile type
-func (m Map) Fill(tile byte) {
+func (m Map) Fill(tile rune) {
 	for y := 0; y < m.Height; y++ {
 		for x := 0; x < m.Width; x++ {
 			m.SetTile(x, y, tile)
@@ -101,4 +98,20 @@ func (m Map) Print() {
 
 		fmt.Println()
 	}
+}
+
+// Check if rectangular area is clear, i.e. only composed of nothing tiles
+func (m Map) isClear(roomX, roomY, roomWidth, roomHeight int) bool {
+	for x := roomX; x < roomX+roomWidth; x++ {
+		for y := roomY; y < roomY+roomHeight; y++ {
+			c, err := m.GetTile(x, y)
+			if err != nil {
+				panic(err)
+			}
+			if c != nothing {
+				return false
+			}
+		}
+	}
+	return true
 }

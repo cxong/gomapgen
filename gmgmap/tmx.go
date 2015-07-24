@@ -41,7 +41,7 @@ type TMXTemplate struct {
 // DawnLikeTemplate - using DawnLike tile set
 var DawnLikeTemplate = TMXTemplate{
 	"dawnlike",
-	"1043",
+	"1031",
 	[]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
 	[]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
 	// TODO: wall tile sets
@@ -160,7 +160,7 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 	tmxTemplate.CSV = strings.Join(exportTiles, ",")
 }
 
-func get16Tile(m Map, x, y int, tile byte, templateTiles []string) string {
+func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
 	up := isSameTile(m, x, y-1, tile)
 	right := isSameTile(m, x+1, y, tile)
 	down := isSameTile(m, x, y+1, tile)
@@ -217,7 +217,7 @@ func get16Tile(m Map, x, y int, tile byte, templateTiles []string) string {
 	panic("unknown error")
 }
 
-func isSameTile(m Map, x, y int, tile byte) bool {
+func isSameTile(m Map, x, y int, tile rune) bool {
 	other, err := m.GetTile(x, y)
 	return err != nil || other == tile
 }
