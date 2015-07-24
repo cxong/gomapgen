@@ -140,7 +140,7 @@ func NewRogue(width, height,
 				tile := room
 				if x == roomX || x == roomX+roomWidth-1 ||
 					y == roomY || y == roomY+roomHeight-1 {
-					tile = wall
+					tile = wall2
 				}
 				if err := m.SetTile(x, y, tile); err != nil {
 					panic(err)

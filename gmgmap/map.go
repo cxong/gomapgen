@@ -15,6 +15,7 @@ const (
 	floor   = 'f'
 	floor2  = 'F'
 	wall    = 'w'
+	wall2   = 'W'
 	room    = 'r'
 )
 
