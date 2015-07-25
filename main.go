@@ -11,8 +11,10 @@ func main() {
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
 	iterations := flag.Int("iterations", 3000, "number of iterations for random walk algo")
-	minRoomSize := flag.Int("minroomsize", 3, "minimum room size, for rogue algo")
-	maxRoomSize := flag.Int("maxroomsize", 15, "maximum room size, for rogue algo")
+	gridWidth := flag.Int("gridwidth", 3, "grid size, for rogue algo")
+	gridHeight := flag.Int("gridheight", 3, "grid size, for rogue algo")
+	minRoomPct := flag.Int("minroompct", 50, "percent of rooms per grid, for rogue algo")
+	maxRoomPct := flag.Int("maxroompct", 100, "percent of rooms per grid, for rogue algo")
 	flag.Parse()
 	// make map
 	m := gmgmap.NewMap(*width, *height)
@@ -20,7 +22,8 @@ func main() {
 	case "walk":
 		m = gmgmap.NewRandomWalk(*width, *height, *iterations)
 	case "rogue":
-		m = gmgmap.NewRogue(*width, *height, *minRoomSize, *maxRoomSize)
+		m = gmgmap.NewRogue(*width, *height, *gridWidth, *gridHeight,
+			*minRoomPct, *maxRoomPct)
 	}
 	// print
 	m.Print()

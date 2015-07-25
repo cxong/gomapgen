@@ -14,13 +14,11 @@ type connectInfo struct {
 
 // NewRogue - generate a new Rogue-like map, with rooms connected with tunnels
 func NewRogue(width, height,
-	minRoomSize, maxRoomSize int) *Map {
+	gridWidth, gridHeight, minRoomPct, maxRoomPct int) *Map {
 	rand.Seed(time.Now().UTC().UnixNano())
 	m := NewMap(width, height)
 
-	// Divide into 3x3 grids, with flags marking grid connetions
-	gridWidth := (width + 2) / 3
-	gridHeight := (height + 2) / 3
+	// Divide into grid, with flags marking grid connetions
 	connected := make([]connectInfo, gridWidth*gridHeight)
 
 	// Pick random grid to start with
@@ -124,30 +122,46 @@ func NewRogue(width, height,
 		}
 	}
 
-	// Try to place rooms
-	for i := 0; i < 100; i++ {
-		// Generate random room
-		roomWidth := rand.Intn(maxRoomSize-minRoomSize) + minRoomSize
-		roomHeight := rand.Intn(maxRoomSize-minRoomSize) + minRoomSize
-		roomX, roomY := rand.Intn(width-roomWidth), rand.Intn(height-roomHeight)
-		// Check if the room overlaps with anything
-		if !m.isClear(roomX, roomY, roomWidth, roomHeight) {
-			continue
-		}
-		// Place the room
-		for x := roomX; x < roomX+roomWidth; x++ {
-			for y := roomY; y < roomY+roomHeight; y++ {
-				tile := room
-				if x == roomX || x == roomX+roomWidth-1 ||
-					y == roomY || y == roomY+roomHeight-1 {
-					tile = wall2
-				}
-				if err := m.SetTile(x, y, tile); err != nil {
-					panic(err)
+	// Try to place rooms - one for each grid
+	totalGrids := gridWidth * gridHeight
+	numRooms := (rand.Intn(maxRoomPct-minRoomPct) + minRoomPct) * totalGrids / 100
+	roomIndices := rand.Perm(totalGrids)
+	var roomCentres [][2]int
+	gridWidthTiles := width / gridWidth
+	gridHeightTiles := height / gridHeight
+	for i := 0; i < totalGrids; i++ {
+		if i < numRooms {
+			// Generate random room
+			roomWidth := rand.Intn(gridWidthTiles-3) + 3
+			roomHeight := rand.Intn(gridHeightTiles-3) + 3
+			// Coordinates of grid top-left corner
+			gridStartX := (roomIndices[i] % gridWidth) * gridWidthTiles
+			gridStartY := (roomIndices[i] / gridWidth) * gridHeightTiles
+			roomX := rand.Intn(width/gridWidth-roomWidth) + gridStartX
+			roomY := rand.Intn(height/gridHeight-roomHeight) + gridStartY
+			// Place the room
+			for x := roomX; x < roomX+roomWidth; x++ {
+				for y := roomY; y < roomY+roomHeight; y++ {
+					tile := room
+					if x == roomX || x == roomX+roomWidth-1 ||
+						y == roomY || y == roomY+roomHeight-1 {
+						tile = wall2
+					}
+					if err := m.SetTile(x, y, tile); err != nil {
+						panic(err)
+					}
 				}
 			}
+			roomCentre := [2]int{roomX + roomWidth/2, roomY + roomHeight/2}
+			roomCentres = append(roomCentres, roomCentre)
+		} else {
+			// Generate
 		}
+
 	}
+
+	//
+
 	return m
 }
 
