@@ -29,6 +29,7 @@ const (
 	door       = '+'
 	stairsUp   = '<'
 	stairsDown = '>'
+	tree       = 't'
 )
 
 // NewMap - create a new Map for a certain size

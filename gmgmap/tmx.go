@@ -30,6 +30,7 @@ type TMXTemplate struct {
 	doorV      string
 	stairsUp   string
 	stairsDown string
+	treeIDs    []string
 
 	// Parameters for map generation
 	floorTerrain  bool
@@ -38,6 +39,7 @@ type TMXTemplate struct {
 	wall2Terrain  bool
 	roomTerrain   bool
 	room2Terrain  bool
+	treeTerrain   bool
 
 	// Parameters used for template export
 	Width        int
@@ -57,7 +59,8 @@ var DawnLikeTemplate = TMXTemplate{
 	[]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
 	"2096", "2097",
 	"3136", "3137",
-	false, true, true, true, true, true,
+	[]string{"2497", "2489", "2490", "2498", "2506", "2505", "2504", "2496", "2488", "2491"},
+	false, true, true, true, true, true, true,
 	0, 0, "", ""}
 
 // ToTMX - export map as TMX (Tiled XML map)
@@ -189,6 +192,13 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 				case stairsDown:
 					exportTiles[x+y*l.Width] = tmxTemplate.stairsDown
 					continue
+				case tree:
+					if !tmxTemplate.treeTerrain {
+						exportTiles[x+y*l.Width] = tmxTemplate.treeIDs[9]
+						continue
+					}
+					exportTiles[x+y*l.Width] = get9Tile(m, x, y, tile, tmxTemplate.treeIDs)
+					continue
 				}
 				exportTiles[x+y*l.Width] = get16Tile(m, x, y, tile, tileIDs)
 			}
@@ -256,9 +266,77 @@ func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
 	panic("unknown error")
 }
 
+func get9Tile(m Map, x, y int, tile rune, templateTiles []string) string {
+	up := hasSameTile(m, x, y-1, tile)
+	upright := hasSameTile(m, x+1, y-1, tile)
+	right := hasSameTile(m, x+1, y, tile)
+	downright := hasSameTile(m, x+1, y+1, tile)
+	down := hasSameTile(m, x, y+1, tile)
+	downleft := hasSameTile(m, x-1, y+1, tile)
+	left := hasSameTile(m, x-1, y, tile)
+	upleft := hasSameTile(m, x-1, y-1, tile)
+	numSame := 0
+	if up {
+		numSame++
+	}
+	if upright {
+		numSame++
+	}
+	if right {
+		numSame++
+	}
+	if downright {
+		numSame++
+	}
+	if down {
+		numSame++
+	}
+	if downleft {
+		numSame++
+	}
+	if left {
+		numSame++
+	}
+	if upleft {
+		numSame++
+	}
+	switch {
+	case up && upright && right && downright && down && downleft && left && upleft:
+		return templateTiles[0]
+	case numSame >= 6 && up && right && down && left:
+		return templateTiles[0]
+	case right && downright && down && downleft && left:
+		// upper edge
+		return templateTiles[1]
+	case up && down && downleft && left && upleft:
+		// right edge
+		return templateTiles[3]
+	case up && upright && right && left && upleft:
+		// bottom edge
+		return templateTiles[5]
+	case up && upright && right && downright && down:
+		// left edge
+		return templateTiles[7]
+	case down && downleft && left:
+		// upper right corner
+		return templateTiles[2]
+	case up && left && upleft:
+		// bottom right corner
+		return templateTiles[4]
+	case up && upright && right:
+		// bottom left corner
+		return templateTiles[6]
+	case right && downright && down:
+		// upper left corner
+		return templateTiles[8]
+	}
+	return templateTiles[9]
+}
+
 func hasSameTile(m Map, x, y int, tile rune) bool {
+	// Walls don't extend to edge
 	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
-		return false
+		return !IsWall(tile)
 	}
 	for _, l := range m.Layers {
 		t := l.getTile(x, y)
