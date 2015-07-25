@@ -26,6 +26,7 @@ type TMXTemplate struct {
 	wallIDs   []string
 	wall2IDs  []string
 	roomIDs   []string
+	room2IDs  []string
 
 	// Parameters for map generation
 	floorTerrain  bool
@@ -33,6 +34,7 @@ type TMXTemplate struct {
 	wallTerrain   bool
 	wall2Terrain  bool
 	roomTerrain   bool
+	room2Terrain  bool
 
 	// Parameters used for template export
 	Width  int
@@ -49,7 +51,8 @@ var DawnLikeTemplate = TMXTemplate{
 	[]string{"92", "72", "70", "93", "110", "112", "108", "91", "68", "69", "88", "88", "110", "89", "108", "71"},
 	[]string{"85", "65", "63", "86", "103", "105", "101", "84", "61", "62", "81", "81", "103", "82", "101", "64"},
 	[]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
-	false, true, true, true, true,
+	[]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
+	false, true, true, true, true, true,
 	0, 0, ""}
 
 // ToTMX - export map as TMX (Tiled XML map)
@@ -160,6 +163,12 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 					continue
 				}
 				tileIDs = tmxTemplate.roomIDs
+			case room2:
+				if !tmxTemplate.room2Terrain {
+					exportTiles[x+y*m.Width] = tmxTemplate.room2IDs[0]
+					continue
+				}
+				tileIDs = tmxTemplate.room2IDs
 			}
 			exportTiles[x+y*m.Width] = get16Tile(m, x, y, tile, tileIDs)
 		}

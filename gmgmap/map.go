@@ -17,6 +17,7 @@ const (
 	wall    = 'w'
 	wall2   = 'W'
 	room    = 'r'
+	room2   = 'R'
 )
 
 // NewMap - create a new Map for a certain size
