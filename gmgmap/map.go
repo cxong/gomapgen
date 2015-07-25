@@ -2,9 +2,17 @@ package gmgmap
 
 import "fmt"
 
+// Layer - a rectangular collection of tiles
+type Layer struct {
+	Name   string
+	Tiles  []rune
+	Width  int
+	Height int
+}
+
 // Map - a rectangular tile map
 type Map struct {
-	Tiles  []rune
+	Layers []*Layer
 	Width  int
 	Height int
 }
@@ -26,40 +34,43 @@ func NewMap(width, height int) *Map {
 	m := new(Map)
 	m.Width = width
 	m.Height = height
-	m.Tiles = make([]rune, m.Width*m.Height)
-	m.Fill(nothing)
+	m.Layers = append(m.Layers, newLayer("Furniture", width, height))
+	m.Layers = append(m.Layers, newLayer("Tiles", width, height))
 	return m
 }
 
-// TileOutOfBounds - returned when trying to access a map tile that is out of
-// bounds
-type TileOutOfBounds struct {
+func newLayer(name string, width, height int) *Layer {
+	l := new(Layer)
+	l.Name = name
+	l.Width, l.Height = width, height
+	l.Tiles = make([]rune, width*height)
+	l.fill(nothing)
+	return l
 }
 
-func (e *TileOutOfBounds) Error() string { return "Tile out of bounds" }
-
-// GetTile - get tile at x, y
-func (m Map) GetTile(x, y int) (rune, error) {
-	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
-		return 0, &TileOutOfBounds{}
+// Layer - get a map layer by name
+func (m Map) Layer(name string) *Layer {
+	for _, l := range m.Layers {
+		if l.Name == name {
+			return l
+		}
 	}
-	return m.Tiles[x+y*m.Width], nil
-}
-
-// SetTile - set tile at x, y
-func (m Map) SetTile(x, y int, tile rune) error {
-	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
-		return &TileOutOfBounds{}
-	}
-	m.Tiles[x+y*m.Width] = tile
 	return nil
 }
 
+func (l Layer) getTile(x, y int) rune {
+	return l.Tiles[x+y*l.Width]
+}
+
+func (l Layer) setTile(x, y int, tile rune) {
+	l.Tiles[x+y*l.Width] = tile
+}
+
 // Fill the map with a single tile type
-func (m Map) Fill(tile rune) {
-	for y := 0; y < m.Height; y++ {
-		for x := 0; x < m.Width; x++ {
-			m.SetTile(x, y, tile)
+func (l Layer) fill(tile rune) {
+	for y := 0; y < l.Height; y++ {
+		for x := 0; x < l.Width; x++ {
+			l.setTile(x, y, tile)
 		}
 	}
 }
@@ -82,8 +93,14 @@ func (m Map) Print() {
 
 		// Interior cells
 		for x := 0; x < m.Width; x++ {
-			var i = y*m.Width + x
-			fmt.Printf("%c", m.Tiles[i])
+			// Print the top-most cell in the Layers
+			for index, layer := range m.Layers {
+				tile := layer.getTile(x, y)
+				if index == len(m.Layers)-1 || tile != nothing {
+					fmt.Printf("%c", tile)
+					break
+				}
+			}
 		}
 
 		// Right of frame
@@ -104,14 +121,10 @@ func (m Map) Print() {
 }
 
 // Check if rectangular area is clear, i.e. only composed of nothing tiles
-func (m Map) isClear(roomX, roomY, roomWidth, roomHeight int) bool {
+func (l Layer) isClear(roomX, roomY, roomWidth, roomHeight int) bool {
 	for x := roomX; x < roomX+roomWidth; x++ {
 		for y := roomY; y < roomY+roomHeight; y++ {
-			c, err := m.GetTile(x, y)
-			if err != nil {
-				panic(err)
-			}
-			if c != nothing {
+			if l.getTile(x, y) != nothing {
 				return false
 			}
 		}

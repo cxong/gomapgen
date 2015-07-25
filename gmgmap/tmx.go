@@ -19,8 +19,7 @@ type TMXTemplate struct {
 	// then 8 tiles from top clockwise,
 	// then h/v,
 	// then 4 end tiles from top clockwise,
-	// then isolated tile
-	nothingID string
+	// then isolated tile\
 	floorIDs  []string
 	floor2IDs []string
 	wallIDs   []string
@@ -39,15 +38,15 @@ type TMXTemplate struct {
 	room2Terrain  bool
 
 	// Parameters used for template export
-	Width  int
-	Height int
-	CSV    string
+	Width        int
+	Height       int
+	CSV          string
+	CSVFurniture string
 }
 
 // DawnLikeTemplate - using DawnLike tile set
 var DawnLikeTemplate = TMXTemplate{
 	"dawnlike",
-	"1031",
 	[]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
 	[]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
 	[]string{"92", "72", "70", "93", "110", "112", "108", "91", "68", "69", "88", "88", "110", "89", "108", "71"},
@@ -56,7 +55,7 @@ var DawnLikeTemplate = TMXTemplate{
 	[]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
 	"2096", "2097",
 	false, true, true, true, true, true,
-	0, 0, ""}
+	0, 0, "", ""}
 
 // ToTMX - export map as TMX (Tiled XML map)
 func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
@@ -124,74 +123,78 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 	tmxTemplate.Width = m.Width
 	tmxTemplate.Height = m.Height
-	exportTiles := make([]string, len(m.Tiles))
-	for y := 0; y < m.Height; y++ {
-		for x := 0; x < m.Width; x++ {
-			tile, err := m.GetTile(x, y)
-			if err != nil {
-				panic(err)
+	var makeCSV = func(l *Layer, tileLayer *Layer) string {
+		exportTiles := make([]string, l.Width*l.Height)
+		for y := 0; y < l.Height; y++ {
+			for x := 0; x < l.Width; x++ {
+				tile := l.getTile(x, y)
+				var tileIDs []string
+				switch tile {
+				case nothing:
+					exportTiles[x+y*l.Width] = "0"
+					continue
+				case floor:
+					if !tmxTemplate.floorTerrain {
+						exportTiles[x+y*l.Width] = tmxTemplate.floorIDs[0]
+						continue
+					}
+					tileIDs = tmxTemplate.floorIDs
+				case floor2:
+					if !tmxTemplate.floor2Terrain {
+						exportTiles[x+y*l.Width] = tmxTemplate.floor2IDs[0]
+						continue
+					}
+					tileIDs = tmxTemplate.floor2IDs
+				case wall:
+					if !tmxTemplate.wallTerrain {
+						exportTiles[x+y*l.Width] = tmxTemplate.wallIDs[0]
+						continue
+					}
+					tileIDs = tmxTemplate.wallIDs
+				case wall2:
+					if !tmxTemplate.wall2Terrain {
+						exportTiles[x+y*l.Width] = tmxTemplate.wall2IDs[0]
+						continue
+					}
+					tileIDs = tmxTemplate.wall2IDs
+				case room:
+					if !tmxTemplate.roomTerrain {
+						exportTiles[x+y*l.Width] = tmxTemplate.roomIDs[0]
+						continue
+					}
+					tileIDs = tmxTemplate.roomIDs
+				case room2:
+					if !tmxTemplate.room2Terrain {
+						exportTiles[x+y*l.Width] = tmxTemplate.room2IDs[0]
+						continue
+					}
+					tileIDs = tmxTemplate.room2IDs
+				case door:
+					left := wall
+					if x > 0 {
+						left = tileLayer.getTile(x-1, y)
+					}
+					if IsWall(left) {
+						exportTiles[x+y*l.Width] = tmxTemplate.doorH
+					} else {
+						exportTiles[x+y*l.Width] = tmxTemplate.doorV
+					}
+					continue
+				}
+				exportTiles[x+y*l.Width] = get16Tile(l, x, y, tile, tileIDs)
 			}
-			var tileIDs []string
-			switch tile {
-			case nothing:
-				exportTiles[x+y*m.Width] = tmxTemplate.nothingID
-				continue
-			case floor:
-				if !tmxTemplate.floorTerrain {
-					exportTiles[x+y*m.Width] = tmxTemplate.floorIDs[0]
-					continue
-				}
-				tileIDs = tmxTemplate.floorIDs
-			case floor2:
-				if !tmxTemplate.floor2Terrain {
-					exportTiles[x+y*m.Width] = tmxTemplate.floor2IDs[0]
-					continue
-				}
-				tileIDs = tmxTemplate.floor2IDs
-			case wall:
-				if !tmxTemplate.wallTerrain {
-					exportTiles[x+y*m.Width] = tmxTemplate.wallIDs[0]
-					continue
-				}
-				tileIDs = tmxTemplate.wallIDs
-			case wall2:
-				if !tmxTemplate.wall2Terrain {
-					exportTiles[x+y*m.Width] = tmxTemplate.wall2IDs[0]
-					continue
-				}
-				tileIDs = tmxTemplate.wall2IDs
-			case room:
-				if !tmxTemplate.roomTerrain {
-					exportTiles[x+y*m.Width] = tmxTemplate.roomIDs[0]
-					continue
-				}
-				tileIDs = tmxTemplate.roomIDs
-			case room2:
-				if !tmxTemplate.room2Terrain {
-					exportTiles[x+y*m.Width] = tmxTemplate.room2IDs[0]
-					continue
-				}
-				tileIDs = tmxTemplate.room2IDs
-			case door:
-				left, err := m.GetTile(x-1, y)
-				if err != nil || IsWall(left) {
-					exportTiles[x+y*m.Width] = tmxTemplate.doorH
-				} else {
-					exportTiles[x+y*m.Width] = tmxTemplate.doorV
-				}
-				continue
-			}
-			exportTiles[x+y*m.Width] = get16Tile(m, x, y, tile, tileIDs)
 		}
+		return strings.Join(exportTiles, ",")
 	}
-	tmxTemplate.CSV = strings.Join(exportTiles, ",")
+	tmxTemplate.CSV = makeCSV(m.Layer("Tiles"), m.Layer("Tiles"))
+	tmxTemplate.CSVFurniture = makeCSV(m.Layer("Furniture"), m.Layer("Tiles"))
 }
 
-func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
-	up := isSameTile(m, x, y-1, tile)
-	right := isSameTile(m, x+1, y, tile)
-	down := isSameTile(m, x, y+1, tile)
-	left := isSameTile(m, x-1, y, tile)
+func get16Tile(l *Layer, x, y int, tile rune, templateTiles []string) string {
+	up := isSameTile(l, x, y-1, tile)
+	right := isSameTile(l, x+1, y, tile)
+	down := isSameTile(l, x, y+1, tile)
+	left := isSameTile(l, x-1, y, tile)
 	switch {
 	case up && right && down && left:
 		return templateTiles[0]
@@ -244,7 +247,9 @@ func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
 	panic("unknown error")
 }
 
-func isSameTile(m Map, x, y int, tile rune) bool {
-	other, err := m.GetTile(x, y)
-	return err == nil && other == tile
+func isSameTile(l *Layer, x, y int, tile rune) bool {
+	if x < 0 || x >= l.Width || y < 0 || y >= l.Height {
+		return false
+	}
+	return l.getTile(x, y) == tile
 }
