@@ -19,14 +19,16 @@ type Map struct {
 
 // Tile types
 const (
-	nothing = ' '
-	floor   = 'f'
-	floor2  = 'F'
-	wall    = 'w'
-	wall2   = 'W'
-	room    = '.'
-	room2   = '#'
-	door    = '+'
+	nothing    = ' '
+	floor      = 'f'
+	floor2     = 'F'
+	wall       = 'w'
+	wall2      = 'W'
+	room       = '.'
+	room2      = '#'
+	door       = '+'
+	stairsUp   = '<'
+	stairsDown = '>'
 )
 
 // NewMap - create a new Map for a certain size

@@ -36,6 +36,9 @@
  <tileset firstgid="3104" name="Container0" tilewidth="16" tileheight="16">
   <image source="Items/Chest0.png" width="128" height="48"/>
  </tileset>
+ <tileset firstgid="3128" name="Tile" tilewidth="16" tileheight="16">
+  <image source="Objects/Tile.png" width="128" height="64"/>
+ </tileset>
  <layer name="Tiles" width="{{.Width}}" height="{{.Height}}">
   <data encoding="csv">
 {{.CSV}}

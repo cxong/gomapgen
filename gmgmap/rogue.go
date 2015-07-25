@@ -20,6 +20,8 @@ func NewRogue(width, height,
 
 	// Pick random grid to start with
 	gridIndex := rand.Intn(len(connected))
+	firstRoomIndex := gridIndex
+	var lastRoomIndex int
 	grid := rect{gridIndex % gridWidth, gridIndex / gridWidth,
 		gridWidth, gridHeight}
 
@@ -52,6 +54,7 @@ func NewRogue(width, height,
 			}
 			// Set neighbour as current grid
 			grid.x, grid.y, gridIndex = neighbourX, neighbourY, neighbourIndex
+			lastRoomIndex = neighbourIndex
 			break
 		}
 	}
@@ -86,6 +89,7 @@ func NewRogue(width, height,
 						gridIndex, neighbourIndex) {
 						panic("unexpected error")
 					}
+					lastRoomIndex = gridIndex
 					break
 				}
 			}
@@ -135,7 +139,9 @@ func NewRogue(width, height,
 		var roomRect rect
 		// force dead ends to be rooms
 		numConnections := connected[roomIndices[i]].numConnections(grid)
-		if i < numRooms || numConnections <= 1 {
+		// also force first/last room to be rooms
+		if i < numRooms || numConnections <= 1 ||
+			roomIndices[i] == firstRoomIndex || roomIndices[i] == lastRoomIndex {
 			// Generate random room
 			roomRect.w = rand.Intn(gridWidthTiles-4) + 4
 			roomRect.h = rand.Intn(gridHeightTiles-4) + 4
@@ -219,6 +225,12 @@ func NewRogue(width, height,
 			}
 		}
 	}
+
+	// Put stairs in the first and last room
+	firstRoom := rooms[firstRoomIndex]
+	lastRoom := rooms[lastRoomIndex]
+	l.setTile(firstRoom.x+firstRoom.w/2, firstRoom.y+firstRoom.h/2, stairsUp)
+	l.setTile(lastRoom.x+lastRoom.w/2, lastRoom.y+lastRoom.h/2, stairsDown)
 
 	return m
 }

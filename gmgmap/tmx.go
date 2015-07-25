@@ -20,14 +20,16 @@ type TMXTemplate struct {
 	// then h/v,
 	// then 4 end tiles from top clockwise,
 	// then isolated tile\
-	floorIDs  []string
-	floor2IDs []string
-	wallIDs   []string
-	wall2IDs  []string
-	roomIDs   []string
-	room2IDs  []string
-	doorH     string
-	doorV     string
+	floorIDs   []string
+	floor2IDs  []string
+	wallIDs    []string
+	wall2IDs   []string
+	roomIDs    []string
+	room2IDs   []string
+	doorH      string
+	doorV      string
+	stairsUp   string
+	stairsDown string
 
 	// Parameters for map generation
 	floorTerrain  bool
@@ -54,6 +56,7 @@ var DawnLikeTemplate = TMXTemplate{
 	[]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
 	[]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
 	"2096", "2097",
+	"3136", "3137",
 	false, true, true, true, true, true,
 	0, 0, "", ""}
 
@@ -179,6 +182,12 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 					} else {
 						exportTiles[x+y*l.Width] = tmxTemplate.doorV
 					}
+					continue
+				case stairsUp:
+					exportTiles[x+y*l.Width] = tmxTemplate.stairsUp
+					continue
+				case stairsDown:
+					exportTiles[x+y*l.Width] = tmxTemplate.stairsDown
 					continue
 				}
 				exportTiles[x+y*l.Width] = get16Tile(l, x, y, tile, tileIDs)
