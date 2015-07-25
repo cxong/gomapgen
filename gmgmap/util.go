@@ -2,6 +2,10 @@ package gmgmap
 
 import "math/rand"
 
+type rect struct {
+	x, y, w, h int
+}
+
 func randomWalk(x, y, w, h int) (int, int) {
 	for {
 		// Choose random direction, up/right/down/left

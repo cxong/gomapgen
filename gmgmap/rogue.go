@@ -1,6 +1,7 @@
 package gmgmap
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -18,27 +19,28 @@ func NewRogue(width, height,
 	rand.Seed(time.Now().UTC().UnixNano())
 	m := NewMap(width, height)
 
-	// Divide into grid, with flags marking grid connetions
-	connected := make([]connectInfo, gridWidth*gridHeight)
+	// Divide into grid, with flags marking grid connections
+	totalGrids := gridWidth * gridHeight
+	connected := make([]connectInfo, totalGrids)
 
 	// Pick random grid to start with
 	gridIndex := rand.Intn(len(connected))
-	gridX := gridIndex % gridWidth
-	gridY := gridIndex / gridWidth
+	grid := rect{gridIndex % gridWidth, gridIndex / gridWidth,
+		gridWidth, gridHeight}
 
 	// Connect to a random neighbour
 	for {
 		// Mark edges as already connected
-		if gridX == 0 {
+		if grid.x == 0 {
 			connected[gridIndex].left = true
 		}
-		if gridY == 0 {
+		if grid.y == 0 {
 			connected[gridIndex].up = true
 		}
-		if gridX == gridWidth-1 {
+		if grid.x == gridWidth-1 {
 			connected[gridIndex].right = true
 		}
-		if gridY == gridHeight-1 {
+		if grid.y == gridHeight-1 {
 			connected[gridIndex].down = true
 		}
 		// If all neighbours connected, end
@@ -47,14 +49,14 @@ func NewRogue(width, height,
 		}
 		// Otherwise, connect to a random unconnected neighbour
 		for {
-			neighbourX, neighbourY := randomWalk(gridX, gridY, gridWidth, gridHeight)
+			neighbourX, neighbourY := randomWalk(grid.x, grid.y, gridWidth, gridHeight)
 			neighbourIndex := neighbourX + neighbourY*gridWidth
-			if !tryConnect(connected, gridX, gridY, neighbourX, neighbourY,
+			if !tryConnect(connected, grid.x, grid.y, neighbourX, neighbourY,
 				gridIndex, neighbourIndex) {
 				continue
 			}
 			// Set neighbour as current grid
-			gridX, gridY, gridIndex = neighbourX, neighbourY, neighbourIndex
+			grid.x, grid.y, gridIndex = neighbourX, neighbourY, neighbourIndex
 			break
 		}
 	}
@@ -63,29 +65,29 @@ func NewRogue(width, height,
 	// connected grid
 	for {
 		hasUnconnected := false
-		for gridX = 0; gridX < gridWidth; gridX++ {
-			for gridY = 0; gridY < gridHeight; gridY++ {
-				gridIndex = gridX + gridY*gridWidth
+		for grid.x = 0; grid.x < gridWidth; grid.x++ {
+			for grid.y = 0; grid.y < gridHeight; grid.y++ {
+				gridIndex = grid.x + grid.y*gridWidth
 				if connected[gridIndex].isConnected() {
 					// Grid is already connected
 					continue
 				}
 				hasUnconnected = true
 				// If no neighbours connected, continue
-				if (gridX == 0 || !connected[gridIndex-1].isConnected()) &&
-					(gridX == gridWidth-1 || !connected[gridIndex+1].isConnected()) &&
-					(gridY == 0 || !connected[gridIndex-gridWidth].isConnected()) &&
-					(gridY == gridHeight-1 || !connected[gridIndex+gridWidth].isConnected()) {
+				if (grid.x == 0 || !connected[gridIndex-1].isConnected()) &&
+					(grid.x == gridWidth-1 || !connected[gridIndex+1].isConnected()) &&
+					(grid.y == 0 || !connected[gridIndex-gridWidth].isConnected()) &&
+					(grid.y == gridHeight-1 || !connected[gridIndex+gridWidth].isConnected()) {
 					continue
 				}
 				// Try connecting to a random connected neighbour
 				for {
-					neighbourX, neighbourY := randomWalk(gridX, gridY, gridWidth, gridHeight)
+					neighbourX, neighbourY := randomWalk(grid.x, grid.y, gridWidth, gridHeight)
 					neighbourIndex := neighbourX + neighbourY*gridWidth
 					if !connected[neighbourIndex].isConnected() {
 						continue
 					}
-					if !tryConnect(connected, gridX, gridY, neighbourX, neighbourY,
+					if !tryConnect(connected, grid.x, grid.y, neighbourX, neighbourY,
 						gridIndex, neighbourIndex) {
 						panic("unexpected error")
 					}
@@ -104,16 +106,16 @@ func NewRogue(width, height,
 	for i := 0; i < extraConnections; i++ {
 		for {
 			gridIndex = rand.Intn(len(connected))
-			gridX = gridIndex % gridWidth
-			gridY = gridIndex / gridWidth
+			grid.x = gridIndex % gridWidth
+			grid.y = gridIndex / gridWidth
 			if connected[gridIndex].allConnected() {
 				break
 			}
 			// Try connecting to a random neighbour
 			for {
-				neighbourX, neighbourY := randomWalk(gridX, gridY, gridWidth, gridHeight)
+				neighbourX, neighbourY := randomWalk(grid.x, grid.y, gridWidth, gridHeight)
 				neighbourIndex := neighbourX + neighbourY*gridWidth
-				if tryConnect(connected, gridX, gridY, neighbourX, neighbourY,
+				if tryConnect(connected, grid.x, grid.y, neighbourX, neighbourY,
 					gridIndex, neighbourIndex) {
 					break
 				}
@@ -123,35 +125,34 @@ func NewRogue(width, height,
 	}
 
 	// Try to place rooms - one for each grid
-	totalGrids := gridWidth * gridHeight
 	numRooms := (rand.Intn(maxRoomPct-minRoomPct) + minRoomPct) * totalGrids / 100
 	roomIndices := rand.Perm(totalGrids)
-	var roomCentres [][2]int
+	rooms := make([]rect, totalGrids)
 	gridWidthTiles := width / gridWidth
 	gridHeightTiles := height / gridHeight
 	for i := 0; i < totalGrids; i++ {
 		// Coordinates of grid top-left corner
 		gridStartX := (roomIndices[i] % gridWidth) * gridWidthTiles
 		gridStartY := (roomIndices[i] / gridWidth) * gridHeightTiles
-		var roomWidth, roomHeight int
+		var roomRect rect
 		if i < numRooms {
 			// Generate random room
-			roomWidth = rand.Intn(gridWidthTiles-3) + 3
-			roomHeight = rand.Intn(gridHeightTiles-3) + 3
+			roomRect.w = rand.Intn(gridWidthTiles-4) + 4
+			roomRect.h = rand.Intn(gridHeightTiles-4) + 4
 		} else {
 			// Generate "gone rooms"
-			roomWidth = 1
-			roomHeight = 1
+			roomRect.w = 1
+			roomRect.h = 1
 		}
 		// Place the room
-		roomX := rand.Intn(width/gridWidth-roomWidth) + gridStartX
-		roomY := rand.Intn(height/gridHeight-roomHeight) + gridStartY
-		for x := roomX; x < roomX+roomWidth; x++ {
-			for y := roomY; y < roomY+roomHeight; y++ {
+		roomRect.x = rand.Intn(width/gridWidth-roomRect.w) + gridStartX
+		roomRect.y = rand.Intn(height/gridHeight-roomRect.h) + gridStartY
+		for x := roomRect.x; x < roomRect.x+roomRect.w; x++ {
+			for y := roomRect.y; y < roomRect.y+roomRect.h; y++ {
 				tile := room
-				if roomWidth > 1 &&
-					(x == roomX || x == roomX+roomWidth-1 ||
-						y == roomY || y == roomY+roomHeight-1) {
+				if roomRect.w > 1 &&
+					(x == roomRect.x || x == roomRect.x+roomRect.w-1 ||
+						y == roomRect.y || y == roomRect.y+roomRect.h-1) {
 					tile = wall2
 				}
 				if err := m.SetTile(x, y, tile); err != nil {
@@ -159,11 +160,27 @@ func NewRogue(width, height,
 				}
 			}
 		}
-		roomCentre := [2]int{roomX + roomWidth/2, roomY + roomHeight/2}
-		roomCentres = append(roomCentres, roomCentre)
+		rooms[roomIndices[i]] = roomRect
 	}
 
-	//
+	// Connect each room to connected neighbours
+	for i := 0; i < totalGrids; i++ {
+		connections := connected[i]
+		x, y := i%gridWidth, i/gridHeight
+		roomRect := rooms[i]
+		// Only connect to the right and below
+		if connections.right && x < gridWidth-1 {
+			// Connect with neighbour on right
+			neighbour := rooms[i+1]
+			addCorridor(m, roomRect.x+roomRect.w-1, roomRect.y+roomRect.h/2,
+				neighbour.x, neighbour.y+neighbour.h/2, 1, 0, room)
+		} else if connections.down && y < gridHeight-1 {
+			// Connect with neighbour below
+			neighbour := rooms[i+gridWidth]
+			addCorridor(m, roomRect.x+roomRect.w/2, roomRect.y+roomRect.h-1,
+				neighbour.x+neighbour.w/2, neighbour.y, 0, 1, room)
+		}
+	}
 
 	return m
 }
@@ -206,4 +223,50 @@ func tryConnect(connected []connectInfo, x, y, x1, y1, index, index2 int) bool {
 		connected[index2].right = true
 	}
 	return true
+}
+
+func addCorridor(m *Map, startX, startY, endX, endY, dx, dy int, tile rune) {
+	var dxAlt, dyAlt int
+	var halfX, halfY int
+	if dx > 0 {
+		// horizontal
+		dxAlt, dyAlt = 0, 1
+		halfX, halfY = (endX-startX)/2+startX, endY+1
+		if endY < startY {
+			dyAlt = -1
+			halfY = endY - 1
+		}
+	} else {
+		// vertical
+		dxAlt, dyAlt = 1, 0
+		halfX, halfY = endX+1, (endY-startY)/2+startY
+		if endX < startX {
+			dxAlt = -1
+			halfX = endX - 1
+		}
+	}
+	// Initial direction
+	x, y := startX, startY
+	fmt.Printf("%d,%d to %d,%d half %d,%d at %d,%d\n",
+		x, y, endX, endY, halfX, halfY, dx, dy)
+	for ; x != halfX && y != halfY; x, y = x+dx, y+dy {
+		if err := m.SetTile(x, y, tile); err != nil {
+			panic(err)
+		}
+	}
+	// Turn
+	for ; x != endX && y != endY; x, y = x+dxAlt, y+dyAlt {
+		if err := m.SetTile(x, y, tile); err != nil {
+			panic(err)
+		}
+	}
+	// Finish
+	for ; x != endX || y != endY; x, y = x+dx, y+dy {
+		if err := m.SetTile(x, y, tile); err != nil {
+			panic(err)
+		}
+	}
+	if err := m.SetTile(endX, endY, tile); err != nil {
+		panic(err)
+	}
 }
