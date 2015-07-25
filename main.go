@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/cxong/gomapgen/gmgmap"
 )
@@ -15,8 +18,11 @@ func main() {
 	gridHeight := flag.Int("gridheight", 3, "grid size, for rogue algo")
 	minRoomPct := flag.Int("minroompct", 50, "percent of rooms per grid, for rogue algo")
 	maxRoomPct := flag.Int("maxroompct", 100, "percent of rooms per grid, for rogue algo")
+	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "random seed")
 	flag.Parse()
 	// make map
+	fmt.Println("Using seed", *seed)
+	rand.Seed(*seed)
 	m := gmgmap.NewMap(*width, *height)
 	switch *algo {
 	case "walk":

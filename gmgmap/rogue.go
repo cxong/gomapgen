@@ -1,10 +1,6 @@
 package gmgmap
 
-import (
-	"fmt"
-	"math/rand"
-	"time"
-)
+import "math/rand"
 
 type connectInfo struct {
 	up    bool
@@ -16,7 +12,6 @@ type connectInfo struct {
 // NewRogue - generate a new Rogue-like map, with rooms connected with tunnels
 func NewRogue(width, height,
 	gridWidth, gridHeight, minRoomPct, maxRoomPct int) *Map {
-	rand.Seed(time.Now().UTC().UnixNano())
 	m := NewMap(width, height)
 
 	// Divide into grid, with flags marking grid connections
@@ -132,10 +127,13 @@ func NewRogue(width, height,
 	gridHeightTiles := height / gridHeight
 	for i := 0; i < totalGrids; i++ {
 		// Coordinates of grid top-left corner
-		gridStartX := (roomIndices[i] % gridWidth) * gridWidthTiles
-		gridStartY := (roomIndices[i] / gridWidth) * gridHeightTiles
+		grid.x, grid.y = roomIndices[i]%gridWidth, roomIndices[i]/gridWidth
+		grid.w, grid.h = gridWidth, gridHeight
+		gridStartX, gridStartY := grid.x*gridWidthTiles, grid.y*gridHeightTiles
 		var roomRect rect
-		if i < numRooms {
+		// force dead ends to be rooms
+		numConnections := connected[roomIndices[i]].numConnections(grid)
+		if i < numRooms || numConnections <= 1 {
 			// Generate random room
 			roomRect.w = rand.Intn(gridWidthTiles-4) + 4
 			roomRect.h = rand.Intn(gridHeightTiles-4) + 4
@@ -174,7 +172,8 @@ func NewRogue(width, height,
 			neighbour := rooms[i+1]
 			addCorridor(m, roomRect.x+roomRect.w-1, roomRect.y+roomRect.h/2,
 				neighbour.x, neighbour.y+neighbour.h/2, 1, 0, room)
-		} else if connections.down && y < gridHeight-1 {
+		}
+		if connections.down && y < gridHeight-1 {
 			// Connect with neighbour below
 			neighbour := rooms[i+gridWidth]
 			addCorridor(m, roomRect.x+roomRect.w/2, roomRect.y+roomRect.h-1,
@@ -185,6 +184,23 @@ func NewRogue(width, height,
 	return m
 }
 
+// Don't count edges as connections
+func (c connectInfo) numConnections(grid rect) int {
+	n := 0
+	if c.up && grid.y > 0 {
+		n++
+	}
+	if c.right && grid.x < grid.w-1 {
+		n++
+	}
+	if c.down && grid.y < grid.h-1 {
+		n++
+	}
+	if c.left && grid.x > 0 {
+		n++
+	}
+	return n
+}
 func (c connectInfo) isConnected() bool {
 	return c.up || c.right || c.down || c.left
 }
@@ -247,8 +263,6 @@ func addCorridor(m *Map, startX, startY, endX, endY, dx, dy int, tile rune) {
 	}
 	// Initial direction
 	x, y := startX, startY
-	fmt.Printf("%d,%d to %d,%d half %d,%d at %d,%d\n",
-		x, y, endX, endY, halfX, halfY, dx, dy)
 	for ; x != halfX && y != halfY; x, y = x+dx, y+dy {
 		if err := m.SetTile(x, y, tile); err != nil {
 			panic(err)
