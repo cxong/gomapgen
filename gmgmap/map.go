@@ -24,9 +24,9 @@ const (
 	floor2  = 'F'
 	wall    = 'w'
 	wall2   = 'W'
-	room    = 'r'
-	room2   = 'R'
-	door    = 'd'
+	room    = '.'
+	room2   = '#'
+	door    = '+'
 )
 
 // NewMap - create a new Map for a certain size
