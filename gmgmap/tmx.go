@@ -190,7 +190,7 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 					exportTiles[x+y*l.Width] = tmxTemplate.stairsDown
 					continue
 				}
-				exportTiles[x+y*l.Width] = get16Tile(l, x, y, tile, tileIDs)
+				exportTiles[x+y*l.Width] = get16Tile(m, x, y, tile, tileIDs)
 			}
 		}
 		return strings.Join(exportTiles, ",")
@@ -199,11 +199,11 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 	tmxTemplate.CSVFurniture = makeCSV(m.Layer("Furniture"), m.Layer("Tiles"))
 }
 
-func get16Tile(l *Layer, x, y int, tile rune, templateTiles []string) string {
-	up := isSameTile(l, x, y-1, tile)
-	right := isSameTile(l, x+1, y, tile)
-	down := isSameTile(l, x, y+1, tile)
-	left := isSameTile(l, x-1, y, tile)
+func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
+	up := hasSameTile(m, x, y-1, tile)
+	right := hasSameTile(m, x+1, y, tile)
+	down := hasSameTile(m, x, y+1, tile)
+	left := hasSameTile(m, x-1, y, tile)
 	switch {
 	case up && right && down && left:
 		return templateTiles[0]
@@ -256,9 +256,17 @@ func get16Tile(l *Layer, x, y int, tile rune, templateTiles []string) string {
 	panic("unknown error")
 }
 
-func isSameTile(l *Layer, x, y int, tile rune) bool {
-	if x < 0 || x >= l.Width || y < 0 || y >= l.Height {
+func hasSameTile(m Map, x, y int, tile rune) bool {
+	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
 		return false
 	}
-	return l.getTile(x, y) == tile
+	for _, l := range m.Layers {
+		t := l.getTile(x, y)
+		if t == tile {
+			return true
+		} else if IsWall(tile) && (IsWall(t) || t == door) {
+			return true
+		}
+	}
+	return false
 }
