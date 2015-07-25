@@ -27,6 +27,8 @@ type TMXTemplate struct {
 	wall2IDs  []string
 	roomIDs   []string
 	room2IDs  []string
+	doorH     string
+	doorV     string
 
 	// Parameters for map generation
 	floorTerrain  bool
@@ -52,6 +54,7 @@ var DawnLikeTemplate = TMXTemplate{
 	[]string{"85", "65", "63", "86", "103", "105", "101", "84", "61", "62", "81", "81", "103", "82", "101", "64"},
 	[]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
 	[]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
+	"2096", "2097",
 	false, true, true, true, true, true,
 	0, 0, ""}
 
@@ -169,6 +172,14 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 					continue
 				}
 				tileIDs = tmxTemplate.room2IDs
+			case door:
+				left, err := m.GetTile(x-1, y)
+				if err != nil || IsWall(left) {
+					exportTiles[x+y*m.Width] = tmxTemplate.doorH
+				} else {
+					exportTiles[x+y*m.Width] = tmxTemplate.doorV
+				}
+				continue
 			}
 			exportTiles[x+y*m.Width] = get16Tile(m, x, y, tile, tileIDs)
 		}

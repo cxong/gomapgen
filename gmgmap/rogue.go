@@ -181,6 +181,52 @@ func NewRogue(width, height,
 		}
 	}
 
+	// Find door tiles: those with 2 neighbour walls and 1 each of corridor/room
+	for y := 0; y < m.Height; y++ {
+		for x := 0; x < m.Width; x++ {
+			tile, err := m.GetTile(x, y)
+			if err != nil {
+				panic(err)
+			}
+			if IsWall(tile) {
+				continue
+			}
+			walls, corridors, rooms := 0, 0, 0
+			var countTile = func(x, y int) {
+				tile, err := m.GetTile(x, y)
+				if err != nil {
+					panic(err)
+				}
+				if IsWall(tile) {
+					walls++
+				}
+				switch tile {
+				case room:
+					rooms++
+				case room2:
+					corridors++
+				}
+			}
+			if y > 0 {
+				countTile(x, y-1)
+			}
+			if x < m.Width-1 {
+				countTile(x+1, y)
+			}
+			if y < m.Height-1 {
+				countTile(x, y+1)
+			}
+			if x > 0 {
+				countTile(x-1, y)
+			}
+			if walls == 2 && corridors == 1 && rooms == 1 {
+				if err := m.SetTile(x, y, door); err != nil {
+					panic(err)
+				}
+			}
+		}
+	}
+
 	return m
 }
 

@@ -18,6 +18,7 @@ const (
 	wall2   = 'W'
 	room    = 'r'
 	room2   = 'R'
+	door    = 'd'
 )
 
 // NewMap - create a new Map for a certain size
@@ -116,4 +117,9 @@ func (m Map) isClear(roomX, roomY, roomWidth, roomHeight int) bool {
 		}
 	}
 	return true
+}
+
+// IsWall - whether a tile is a wall type
+func IsWall(tile rune) bool {
+	return tile == wall || tile == wall2
 }
