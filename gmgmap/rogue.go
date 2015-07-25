@@ -130,34 +130,37 @@ func NewRogue(width, height,
 	gridWidthTiles := width / gridWidth
 	gridHeightTiles := height / gridHeight
 	for i := 0; i < totalGrids; i++ {
+		// Coordinates of grid top-left corner
+		gridStartX := (roomIndices[i] % gridWidth) * gridWidthTiles
+		gridStartY := (roomIndices[i] / gridWidth) * gridHeightTiles
+		var roomWidth, roomHeight int
 		if i < numRooms {
 			// Generate random room
-			roomWidth := rand.Intn(gridWidthTiles-3) + 3
-			roomHeight := rand.Intn(gridHeightTiles-3) + 3
-			// Coordinates of grid top-left corner
-			gridStartX := (roomIndices[i] % gridWidth) * gridWidthTiles
-			gridStartY := (roomIndices[i] / gridWidth) * gridHeightTiles
-			roomX := rand.Intn(width/gridWidth-roomWidth) + gridStartX
-			roomY := rand.Intn(height/gridHeight-roomHeight) + gridStartY
-			// Place the room
-			for x := roomX; x < roomX+roomWidth; x++ {
-				for y := roomY; y < roomY+roomHeight; y++ {
-					tile := room
-					if x == roomX || x == roomX+roomWidth-1 ||
-						y == roomY || y == roomY+roomHeight-1 {
-						tile = wall2
-					}
-					if err := m.SetTile(x, y, tile); err != nil {
-						panic(err)
-					}
+			roomWidth = rand.Intn(gridWidthTiles-3) + 3
+			roomHeight = rand.Intn(gridHeightTiles-3) + 3
+		} else {
+			// Generate "gone rooms"
+			roomWidth = 1
+			roomHeight = 1
+		}
+		// Place the room
+		roomX := rand.Intn(width/gridWidth-roomWidth) + gridStartX
+		roomY := rand.Intn(height/gridHeight-roomHeight) + gridStartY
+		for x := roomX; x < roomX+roomWidth; x++ {
+			for y := roomY; y < roomY+roomHeight; y++ {
+				tile := room
+				if roomWidth > 1 &&
+					(x == roomX || x == roomX+roomWidth-1 ||
+						y == roomY || y == roomY+roomHeight-1) {
+					tile = wall2
+				}
+				if err := m.SetTile(x, y, tile); err != nil {
+					panic(err)
 				}
 			}
-			roomCentre := [2]int{roomX + roomWidth/2, roomY + roomHeight/2}
-			roomCentres = append(roomCentres, roomCentre)
-		} else {
-			// Generate
 		}
-
+		roomCentre := [2]int{roomX + roomWidth/2, roomY + roomHeight/2}
+		roomCentres = append(roomCentres, roomCentre)
 	}
 
 	//
