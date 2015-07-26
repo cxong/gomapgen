@@ -22,6 +22,7 @@ type TMXTemplate struct {
 	// then isolated tile\
 	floorIDs   []string
 	floor2IDs  []string
+	floor3IDs  []string
 	wallIDs    []string
 	wall2IDs   []string
 	roomIDs    []string
@@ -31,15 +32,6 @@ type TMXTemplate struct {
 	stairsUp   string
 	stairsDown string
 	treeIDs    []string
-
-	// Parameters for map generation
-	floorTerrain  bool
-	floor2Terrain bool
-	wallTerrain   bool
-	wall2Terrain  bool
-	roomTerrain   bool
-	room2Terrain  bool
-	treeTerrain   bool
 
 	// Parameters used for template export
 	Width        int
@@ -53,6 +45,7 @@ var DawnLikeTemplate = TMXTemplate{
 	"dawnlike",
 	[]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
 	[]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
+	[]string{"1183", "1162", "1163", "1184", "1205", "1204", "1203", "1182", "1161", "1187", "1185", "1164", "1188", "1206", "1186", "1166"},
 	[]string{"92", "72", "70", "93", "110", "112", "108", "91", "68", "69", "88", "88", "110", "89", "108", "71"},
 	[]string{"85", "65", "63", "86", "103", "105", "101", "84", "61", "62", "81", "81", "103", "82", "101", "64"},
 	[]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
@@ -60,7 +53,6 @@ var DawnLikeTemplate = TMXTemplate{
 	"2096", "2097",
 	"3304", "3305",
 	[]string{"2537", "2525", "2526", "2538", "2550", "2549", "2548", "2536", "2524", "2540", "2528", "2529", "2541", "2553", "2552", "2527"},
-	false, true, true, true, true, true, true,
 	0, 0, "", ""}
 
 // ToTMX - export map as TMX (Tiled XML map)
@@ -140,40 +132,18 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 					exportTiles[x+y*l.Width] = "0"
 					continue
 				case floor:
-					if !tmxTemplate.floorTerrain {
-						exportTiles[x+y*l.Width] = tmxTemplate.floorIDs[0]
-						continue
-					}
 					tileIDs = tmxTemplate.floorIDs
 				case floor2:
-					if !tmxTemplate.floor2Terrain {
-						exportTiles[x+y*l.Width] = tmxTemplate.floor2IDs[0]
-						continue
-					}
 					tileIDs = tmxTemplate.floor2IDs
+				case floor3:
+					tileIDs = tmxTemplate.floor3IDs
 				case wall:
-					if !tmxTemplate.wallTerrain {
-						exportTiles[x+y*l.Width] = tmxTemplate.wallIDs[0]
-						continue
-					}
 					tileIDs = tmxTemplate.wallIDs
 				case wall2:
-					if !tmxTemplate.wall2Terrain {
-						exportTiles[x+y*l.Width] = tmxTemplate.wall2IDs[0]
-						continue
-					}
 					tileIDs = tmxTemplate.wall2IDs
 				case room:
-					if !tmxTemplate.roomTerrain {
-						exportTiles[x+y*l.Width] = tmxTemplate.roomIDs[0]
-						continue
-					}
 					tileIDs = tmxTemplate.roomIDs
 				case room2:
-					if !tmxTemplate.room2Terrain {
-						exportTiles[x+y*l.Width] = tmxTemplate.room2IDs[0]
-						continue
-					}
 					tileIDs = tmxTemplate.room2IDs
 				case door:
 					left := wall
@@ -193,10 +163,6 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 					exportTiles[x+y*l.Width] = tmxTemplate.stairsDown
 					continue
 				case tree:
-					if !tmxTemplate.treeTerrain {
-						exportTiles[x+y*l.Width] = tmxTemplate.treeIDs[9]
-						continue
-					}
 					exportTiles[x+y*l.Width] = get16Tile2(m, x, y, tile, tmxTemplate.treeIDs)
 					continue
 				}

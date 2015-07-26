@@ -22,6 +22,7 @@ const (
 	nothing    = ' '
 	floor      = 'f'
 	floor2     = 'F'
+	floor3     = 's'
 	wall       = 'w'
 	wall2      = 'W'
 	room       = '.'
@@ -133,6 +134,22 @@ func (l Layer) isClear(roomX, roomY, roomWidth, roomHeight int) bool {
 		}
 	}
 	return true
+}
+
+// Count the number of tiles around a tile that match a certain tile
+// Boundary tiles count
+func (l Layer) countTiles(x, y, r int, tile rune) int {
+	c := 0
+	for xi := x - r; xi <= x+r; xi++ {
+		for yi := y - r; yi <= y+r; yi++ {
+			if xi < 0 || xi >= l.Width || yi < 0 || yi >= l.Height {
+				c++
+			} else if l.getTile(xi, yi) == tile {
+				c++
+			}
+		}
+	}
+	return c
 }
 
 // IsWall - whether a tile is a wall type

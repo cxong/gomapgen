@@ -1,6 +1,6 @@
 package gmgmap
 
-// NewRandomWalk - create a room-on-floor map using random walk algorithm
+// NewRandomWalk - create a tree-on-floor map using random walk algorithm
 func NewRandomWalk(width, height, iterations int) *Map {
 	m := NewMap(width, height)
 	m.Layer("Tiles").fill(floor)
