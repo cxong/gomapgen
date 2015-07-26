@@ -22,21 +22,21 @@
   <image source="Characters/Player0.png" width="128" height="240"/>
  </tileset>
  <tileset firstgid="2488" name="Tree0" tilewidth="16" tileheight="16">
-  <image source="Objects/Tree0.png" width="128" height="528"/>
+  <image source="Objects/Tree0.png" width="192" height="576"/>
  </tileset>
- <tileset firstgid="2752" name="Humanoid0" tilewidth="16" tileheight="16">
+ <tileset firstgid="2920" name="Humanoid0" tilewidth="16" tileheight="16">
   <image source="Characters/Humanoid0.png" width="128" height="432"/>
  </tileset>
- <tileset firstgid="2968" name="Cat0" tilewidth="16" tileheight="16">
+ <tileset firstgid="3136" name="Cat0" tilewidth="16" tileheight="16">
   <image source="Characters/Cat0.png" width="128" height="80"/>
  </tileset>
- <tileset firstgid="3008" name="Quadraped0" tilewidth="16" tileheight="16">
+ <tileset firstgid="3176" name="Quadraped0" tilewidth="16" tileheight="16">
   <image source="Characters/Quadraped0.png" width="128" height="192"/>
  </tileset>
- <tileset firstgid="3104" name="Container0" tilewidth="16" tileheight="16">
+ <tileset firstgid="3272" name="Container0" tilewidth="16" tileheight="16">
   <image source="Items/Chest0.png" width="128" height="48"/>
  </tileset>
- <tileset firstgid="3128" name="Tile" tilewidth="16" tileheight="16">
+ <tileset firstgid="3296" name="Tile" tilewidth="16" tileheight="16">
   <image source="Objects/Tile.png" width="128" height="64"/>
  </tileset>
  <layer name="Tiles" width="{{.Width}}" height="{{.Height}}">

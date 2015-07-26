@@ -59,7 +59,7 @@ var DawnLikeTemplate = TMXTemplate{
 	[]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
 	"2096", "2097",
 	"3136", "3137",
-	[]string{"2497", "2489", "2490", "2498", "2506", "2505", "2504", "2496", "2488", "2491"},
+	[]string{"2537", "2525", "2526", "2538", "2550", "2549", "2548", "2536", "2524", "2540", "2528", "2529", "2541", "2553", "2552", "2527"},
 	false, true, true, true, true, true, true,
 	0, 0, "", ""}
 
@@ -197,7 +197,7 @@ func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
 						exportTiles[x+y*l.Width] = tmxTemplate.treeIDs[9]
 						continue
 					}
-					exportTiles[x+y*l.Width] = get9Tile(m, x, y, tile, tmxTemplate.treeIDs)
+					exportTiles[x+y*l.Width] = get16Tile2(m, x, y, tile, tmxTemplate.treeIDs)
 					continue
 				}
 				exportTiles[x+y*l.Width] = get16Tile(m, x, y, tile, tileIDs)
@@ -266,7 +266,7 @@ func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
 	panic("unknown error")
 }
 
-func get9Tile(m Map, x, y int, tile rune, templateTiles []string) string {
+func get16Tile2(m Map, x, y int, tile rune, templateTiles []string) string {
 	up := hasSameTile(m, x, y-1, tile)
 	upright := hasSameTile(m, x+1, y-1, tile)
 	right := hasSameTile(m, x+1, y, tile)
@@ -275,36 +275,27 @@ func get9Tile(m Map, x, y int, tile rune, templateTiles []string) string {
 	downleft := hasSameTile(m, x-1, y+1, tile)
 	left := hasSameTile(m, x-1, y, tile)
 	upleft := hasSameTile(m, x-1, y-1, tile)
-	numSame := 0
-	if up {
-		numSame++
-	}
-	if upright {
-		numSame++
-	}
-	if right {
-		numSame++
-	}
-	if downright {
-		numSame++
-	}
-	if down {
-		numSame++
-	}
-	if downleft {
-		numSame++
-	}
-	if left {
-		numSame++
-	}
-	if upleft {
-		numSame++
-	}
 	switch {
 	case up && upright && right && downright && down && downleft && left && upleft:
 		return templateTiles[0]
-	case numSame >= 6 && up && right && down && left:
-		return templateTiles[0]
+	case up && right && downright && down && downleft && left && upleft:
+		// upper right concave
+		return templateTiles[9]
+	case up && upright && right && down && downleft && left && upleft:
+		// lower right concave
+		return templateTiles[10]
+	case up && upright && right && downright && down && left && upleft:
+		// lower left concave
+		return templateTiles[11]
+	case up && upright && right && downright && down && downleft && left:
+		// upper left concave
+		return templateTiles[12]
+	case right && downright && down && left && upleft && up:
+		// upleft-downright diagonal
+		return templateTiles[13]
+	case up && upright && right && down && downleft && left:
+		// upright-downleft diagonal
+		return templateTiles[14]
 	case right && downright && down && downleft && left:
 		// upper edge
 		return templateTiles[1]
@@ -330,7 +321,7 @@ func get9Tile(m Map, x, y int, tile rune, templateTiles []string) string {
 		// upper left corner
 		return templateTiles[8]
 	}
-	return templateTiles[9]
+	return templateTiles[15]
 }
 
 func hasSameTile(m Map, x, y int, tile rune) bool {
