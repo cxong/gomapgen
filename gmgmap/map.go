@@ -22,7 +22,7 @@ const (
 	nothing    = ' '
 	floor      = 'f'
 	floor2     = 'F'
-	floor3     = 's'
+	road       = 'r'
 	wall       = 'w'
 	wall2      = 'W'
 	room       = '.'
@@ -30,7 +30,23 @@ const (
 	door       = '+'
 	stairsUp   = '<'
 	stairsDown = '>'
-	tree       = 't'
+	tree       = 'T'
+	grass      = 'g'
+
+	// flavour
+	sign       = 's'
+	hanging    = 'h' // stuff that goes on indoor walls
+	window     = 'o'
+	counter    = '_'
+	shopkeeper = 'A'
+	shelf      = 'S'
+	stock      = ')'
+	table      = 't'
+	chair      = 'c'
+	rug        = '~'
+	pot        = '('
+	assistant  = 'a'
+	player     = '@'
 )
 
 // NewMap - create a new Map for a certain size
@@ -38,8 +54,8 @@ func NewMap(width, height int) *Map {
 	m := new(Map)
 	m.Width = width
 	m.Height = height
-	m.Layers = append(m.Layers, newLayer("Furniture", width, height))
-	m.Layers = append(m.Layers, newLayer("Tiles", width, height))
+	m.Layers = append(m.Layers, newLayer("Ground", width, height))
+	m.Layers = append(m.Layers, newLayer("Structures", width, height))
 	return m
 }
 
@@ -53,28 +69,41 @@ func newLayer(name string, width, height int) *Layer {
 }
 
 // Layer - get a map layer by name
-func (m Map) Layer(name string) *Layer {
+// If it doesn't exist, add the layer
+func (m *Map) Layer(name string) *Layer {
 	for _, l := range m.Layers {
 		if l.Name == name {
 			return l
 		}
 	}
-	return nil
+	m.Layers = append(m.Layers, newLayer(name, m.Width, m.Height))
+	return m.Layers[len(m.Layers)-1]
 }
 
 func (l Layer) getTile(x, y int) rune {
 	return l.Tiles[x+y*l.Width]
 }
 
-func (l Layer) setTile(x, y int, tile rune) {
+func (l *Layer) setTile(x, y int, tile rune) {
 	l.Tiles[x+y*l.Width] = tile
 }
 
 // Fill the map with a single tile type
-func (l Layer) fill(tile rune) {
+func (l *Layer) fill(tile rune) {
 	for y := 0; y < l.Height; y++ {
 		for x := 0; x < l.Width; x++ {
 			l.setTile(x, y, tile)
+		}
+	}
+}
+
+// Draw a rectangle - optional filled
+func (l *Layer) rectangle(r rect, tile rune, filled bool) {
+	for y := r.y; y < r.y+r.h; y++ {
+		for x := r.x; x < r.x+r.w; x++ {
+			if filled || x == r.x || y == r.y || x == r.x+r.w-1 || y == r.y+r.h-1 {
+				l.setTile(x, y, tile)
+			}
 		}
 	}
 }

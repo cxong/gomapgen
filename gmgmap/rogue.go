@@ -123,7 +123,8 @@ func NewRogue(width, height,
 		}
 	}
 
-	l := m.Layer("Tiles")
+	g := m.Layer("Ground")
+	s := m.Layer("Structures")
 
 	// Try to place rooms - one for each grid
 	numRooms := (rand.Intn(maxRoomPct-minRoomPct) + minRoomPct) * totalGrids / 100
@@ -155,13 +156,13 @@ func NewRogue(width, height,
 		roomRect.y = rand.Intn(height/gridHeight-roomRect.h) + gridStartY
 		for x := roomRect.x; x < roomRect.x+roomRect.w; x++ {
 			for y := roomRect.y; y < roomRect.y+roomRect.h; y++ {
-				tile := room
 				if roomRect.w > 1 &&
 					(x == roomRect.x || x == roomRect.x+roomRect.w-1 ||
 						y == roomRect.y || y == roomRect.y+roomRect.h-1) {
-					tile = wall2
+					s.setTile(x, y, wall2)
+				} else {
+					g.setTile(x, y, room)
 				}
-				l.setTile(x, y, tile)
 			}
 		}
 		rooms[roomIndices[i]] = roomRect
@@ -176,36 +177,34 @@ func NewRogue(width, height,
 		if connections.right && x < gridWidth-1 {
 			// Connect with neighbour on right
 			neighbour := rooms[i+1]
-			addCorridor(l, roomRect.x+roomRect.w-1, roomRect.y+roomRect.h/2,
+			addCorridor(g, s, roomRect.x+roomRect.w-1, roomRect.y+roomRect.h/2,
 				neighbour.x, neighbour.y+neighbour.h/2, 1, 0, room2)
 		}
 		if connections.down && y < gridHeight-1 {
 			// Connect with neighbour below
 			neighbour := rooms[i+gridWidth]
-			addCorridor(l, roomRect.x+roomRect.w/2, roomRect.y+roomRect.h-1,
+			addCorridor(g, s, roomRect.x+roomRect.w/2, roomRect.y+roomRect.h-1,
 				neighbour.x+neighbour.w/2, neighbour.y, 0, 1, room2)
 		}
 	}
 
 	// Find door tiles: those with 2 neighbour walls and 1 each of corridor/room
-	furniture := m.Layer("Furniture")
 	for y := 0; y < m.Height; y++ {
 		for x := 0; x < m.Width; x++ {
-			tile := l.getTile(x, y)
-			if IsWall(tile) {
+			if IsWall(s.getTile(x, y)) {
 				continue
 			}
 			walls, corridors, rooms := 0, 0, 0
 			var countTile = func(x, y int) {
-				tile := l.getTile(x, y)
-				if IsWall(tile) {
+				if IsWall(s.getTile(x, y)) {
 					walls++
-				}
-				switch tile {
-				case room:
-					rooms++
-				case room2:
-					corridors++
+				} else {
+					switch g.getTile(x, y) {
+					case room:
+						rooms++
+					case room2:
+						corridors++
+					}
 				}
 			}
 			if y > 0 {
@@ -221,7 +220,7 @@ func NewRogue(width, height,
 				countTile(x-1, y)
 			}
 			if walls == 2 && corridors == 1 && rooms == 1 {
-				furniture.setTile(x, y, door)
+				s.setTile(x, y, door)
 			}
 		}
 	}
@@ -229,8 +228,8 @@ func NewRogue(width, height,
 	// Put stairs in the first and last room
 	firstRoom := rooms[firstRoomIndex]
 	lastRoom := rooms[lastRoomIndex]
-	l.setTile(firstRoom.x+firstRoom.w/2, firstRoom.y+firstRoom.h/2, stairsUp)
-	l.setTile(lastRoom.x+lastRoom.w/2, lastRoom.y+lastRoom.h/2, stairsDown)
+	s.setTile(firstRoom.x+firstRoom.w/2, firstRoom.y+firstRoom.h/2, stairsUp)
+	s.setTile(lastRoom.x+lastRoom.w/2, lastRoom.y+lastRoom.h/2, stairsDown)
 
 	return m
 }
@@ -292,7 +291,7 @@ func tryConnect(connected []connectInfo, x, y, x1, y1, index, index2 int) bool {
 	return true
 }
 
-func addCorridor(l *Layer, startX, startY, endX, endY, dx, dy int, tile rune) {
+func addCorridor(g, s *Layer, startX, startY, endX, endY, dx, dy int, tile rune) {
 	var dxAlt, dyAlt int
 	var halfX, halfY int
 	if dx > 0 {
@@ -312,18 +311,23 @@ func addCorridor(l *Layer, startX, startY, endX, endY, dx, dy int, tile rune) {
 			halfX = endX - 1
 		}
 	}
+	set := func(x, y int) {
+		g.setTile(x, y, tile)
+		// Clear walls in the way
+		s.setTile(x, y, nothing)
+	}
 	// Initial direction
 	x, y := startX, startY
 	for ; x != halfX && y != halfY; x, y = x+dx, y+dy {
-		l.setTile(x, y, tile)
+		set(x, y)
 	}
 	// Turn
 	for ; x != endX && y != endY; x, y = x+dxAlt, y+dyAlt {
-		l.setTile(x, y, tile)
+		set(x, y)
 	}
 	// Finish
 	for ; x != endX || y != endY; x, y = x+dx, y+dy {
-		l.setTile(x, y, tile)
+		set(x, y)
 	}
-	l.setTile(endX, endY, tile)
+	set(endX, endY)
 }

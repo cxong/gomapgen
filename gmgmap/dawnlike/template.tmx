@@ -39,14 +39,120 @@
  <tileset firstgid="3296" name="Tile" tilewidth="16" tileheight="16">
   <image source="Objects/Tile.png" width="128" height="64"/>
  </tileset>
- <layer name="Tiles" width="{{.Width}}" height="{{.Height}}">
+ <tileset firstgid="3328" name="Aquatic0" tilewidth="16" tileheight="16">
+  <image source="Characters/Aquatic0.png" width="128" height="96"/>
+ </tileset>
+ <tileset firstgid="3376" name="Avian0" tilewidth="16" tileheight="16">
+  <image source="Characters/Avian0.png" width="128" height="208"/>
+ </tileset>
+ <tileset firstgid="3480" name="Cat0" tilewidth="16" tileheight="16">
+  <image source="Characters/Cat0.png" width="128" height="80"/>
+ </tileset>
+ <tileset firstgid="3520" name="Demon0" tilewidth="16" tileheight="16">
+  <image source="Characters/Demon0.png" width="128" height="144"/>
+ </tileset>
+ <tileset firstgid="3592" name="Dog0" tilewidth="16" tileheight="16">
+  <image source="Characters/Dog0.png" width="128" height="112"/>
+ </tileset>
+ <tileset firstgid="3648" name="Elemental0" tilewidth="16" tileheight="16">
+  <image source="Characters/Elemental0.png" width="128" height="176"/>
+ </tileset>
+ <tileset firstgid="3736" name="Misc0" tilewidth="16" tileheight="16">
+  <image source="Characters/Misc0.png" width="128" height="128"/>
+ </tileset>
+ <tileset firstgid="3800" name="Pest0" tilewidth="16" tileheight="16">
+  <image source="Characters/Pest0.png" width="128" height="176"/>
+ </tileset>
+ <tileset firstgid="3888" name="Plant0" tilewidth="16" tileheight="16">
+  <image source="Characters/Plant0.png" width="128" height="128"/>
+ </tileset>
+ <tileset firstgid="3952" name="Reptile0" tilewidth="16" tileheight="16">
+  <image source="Characters/Reptile0.png" width="128" height="248"/>
+ </tileset>
+ <tileset firstgid="4072" name="Rodent0" tilewidth="16" tileheight="16">
+  <image source="Characters/Rodent0.png" width="128" height="64"/>
+ </tileset>
+ <tileset firstgid="4104" name="Slime0" tilewidth="16" tileheight="16">
+  <image source="Characters/Slime0.png" width="128" height="80"/>
+ </tileset>
+ <tileset firstgid="4144" name="Undead0" tilewidth="16" tileheight="16">
+  <image source="Characters/Undead0.png" width="128" height="160"/>
+ </tileset>
+ <tileset firstgid="4224" name="Ammo" tilewidth="16" tileheight="16">
+  <image source="Items/Ammo.png" width="128" height="96"/>
+ </tileset>
+ <tileset firstgid="4272" name="Amulet" tilewidth="16" tileheight="16">
+  <image source="Items/Amulet.png" width="128" height="48"/>
+ </tileset>
+ <tileset firstgid="4296" name="Armor" tilewidth="16" tileheight="16">
+  <image source="Items/Armor.png" width="128" height="144"/>
+ </tileset>
+ <tileset firstgid="4368" name="Book" tilewidth="16" tileheight="16">
+  <image source="Items/Book.png" width="128" height="144"/>
+ </tileset>
+ <tileset firstgid="4440" name="Boot" tilewidth="16" tileheight="16">
+  <image source="Items/Boot.png" width="128" height="32"/>
+ </tileset>
+ <tileset firstgid="4456" name="Chest0" tilewidth="16" tileheight="16">
+  <image source="Items/Chest0.png" width="128" height="48"/>
+ </tileset>
+ <tileset firstgid="4480" name="Flesh" tilewidth="16" tileheight="16">
+  <image source="Items/Flesh.png" width="128" height="144"/>
+ </tileset>
+ <tileset firstgid="4552" name="Food" tilewidth="16" tileheight="16">
+  <image source="Items/Food.png" width="128" height="96"/>
+ </tileset>
+ <tileset firstgid="4600" name="Glove" tilewidth="16" tileheight="16">
+  <image source="Items/Glove.png" width="128" height="16"/>
+ </tileset>
+ <tileset firstgid="4608" name="Hat" tilewidth="16" tileheight="16">
+  <image source="Items/Hat.png" width="128" height="64"/>
+ </tileset>
+ <tileset firstgid="4640" name="Key" tilewidth="16" tileheight="16">
+  <image source="Items/Key.png" width="128" height="16"/>
+ </tileset>
+ <tileset firstgid="4648" name="Light" tilewidth="16" tileheight="16">
+  <image source="Items/Light.png" width="128" height="16"/>
+ </tileset>
+ <tileset firstgid="4656" name="LongWep" tilewidth="16" tileheight="16">
+  <image source="Items/LongWep.png" width="128" height="112"/>
+ </tileset>
+ <tileset firstgid="4712" name="MedWep" tilewidth="16" tileheight="16">
+  <image source="Items/MedWep.png" width="128" height="32"/>
+ </tileset>
+ <tileset firstgid="4728" name="Money" tilewidth="16" tileheight="16">
+  <image source="Items/Money.png" width="128" height="128"/>
+ </tileset>
+ <tileset firstgid="4792" name="Music" tilewidth="16" tileheight="16">
+  <image source="Items/Music.png" width="128" height="96"/>
+ </tileset>
+ <tileset firstgid="4840" name="Potion" tilewidth="16" tileheight="16">
+  <image source="Items/Potion.png" width="128" height="80"/>
+ </tileset>
+ <tileset firstgid="4880" name="Ring" tilewidth="16" tileheight="16">
+  <image source="Items/Ring.png" width="128" height="96"/>
+ </tileset>
+ <tileset firstgid="4928" name="Rock" tilewidth="16" tileheight="16">
+  <image source="Items/Rock.png" width="128" height="32"/>
+ </tileset>
+ <tileset firstgid="4944" name="Scroll" tilewidth="16" tileheight="16">
+  <image source="Items/Scroll.png" width="128" height="96"/>
+ </tileset>
+ <tileset firstgid="4992" name="Shield" tilewidth="16" tileheight="16">
+  <image source="Items/Shield.png" width="128" height="16"/>
+ </tileset>
+ <tileset firstgid="5000" name="ShortWep" tilewidth="16" tileheight="16">
+  <image source="Items/ShortWep.png" width="128" height="80"/>
+ </tileset>
+ <tileset firstgid="5040" name="Tool" tilewidth="16" tileheight="16">
+  <image source="Items/Tool.png" width="128" height="48"/>
+ </tileset>
+ <tileset firstgid="5064" name="Wand" tilewidth="16" tileheight="16">
+  <image source="Items/Wand.png" width="128" height="112"/>
+ </tileset>
+{{range .CSVs}} <layer name="{{.Name}}" width="{{.Width}}" height="{{.Height}}">
   <data encoding="csv">
-{{.CSV}}
+{{.Values}}
   </data>
- </layer>
- <layer name="Furniture" width="{{.Width}}" height="{{.Height}}">
-  <data encoding="csv">
-{{.CSVFurniture}}
-  </data>
- </layer>
+ </layer>{{end}}
 </map>

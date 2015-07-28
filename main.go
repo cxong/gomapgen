@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	algo := flag.String("algo", "cell", "generation algorithm: cell/rogue/walk")
+	algo := flag.String("algo", "shop", "generation algorithm: cell/rogue/shop/walk")
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
 	iterations := flag.Int("iterations", 3000, "number of iterations for random walk algo")
@@ -38,6 +38,8 @@ func main() {
 	case "rogue":
 		m = gmgmap.NewRogue(*width, *height, *gridWidth, *gridHeight,
 			*minRoomPct, *maxRoomPct)
+	case "shop":
+		m = gmgmap.NewShop(*width, *height)
 	case "walk":
 		m = gmgmap.NewRandomWalk(*width, *height, *iterations)
 	}
@@ -45,5 +47,7 @@ func main() {
 	m.Print()
 	// export TMX
 	template := gmgmap.DawnLikeTemplate
-	m.ToTMX(&template)
+	if err := m.ToTMX(&template); err != nil {
+		panic(err)
+	}
 }

@@ -10,11 +10,11 @@ import "math/rand"
 func NewCellularAutomata(width, height, fillPct,
 	r11, r12, repeat1, r21, r22, repeat2 int) *Map {
 	m := NewMap(width, height)
-	m.Layer("Tiles").fill(floor)
-	l := m.Layer("Furniture")
+	m.Layer("Ground").fill(floor)
+	l := m.Layer("Structures")
 	// Randomly set a percentage of the tiles as stones
 	for i := 0; i < fillPct*width*height/100; i++ {
-		l.Tiles[i] = floor3
+		l.Tiles[i] = road
 	}
 	for i := range l.Tiles {
 		j := rand.Intn(i + 1)
@@ -35,9 +35,9 @@ func rep(l *Layer, r1, r2 int) {
 	for y := 0; y < l.Height; y++ {
 		for x := 0; x < l.Width; x++ {
 			i := x + y*l.Width
-			if l.countTiles(x, y, 1, floor3) >= r1 ||
-				l.countTiles(x, y, 2, floor3) <= r2 {
-				buf[i] = floor3
+			if l.countTiles(x, y, 1, road) >= r1 ||
+				l.countTiles(x, y, 2, road) <= r2 {
+				buf[i] = road
 			} else {
 				buf[i] = floor
 			}

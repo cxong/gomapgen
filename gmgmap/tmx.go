@@ -4,12 +4,21 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
 )
+
+// DTO for CSV export
+type csvExport struct {
+	Name   string
+	Width  int
+	Height int
+	Values string
+}
 
 // TMXTemplate - configuration for TMX export
 type TMXTemplate struct {
@@ -20,40 +29,73 @@ type TMXTemplate struct {
 	// then h/v,
 	// then 4 end tiles from top clockwise,
 	// then isolated tile\
-	floorIDs   []string
-	floor2IDs  []string
-	floor3IDs  []string
-	wallIDs    []string
-	wall2IDs   []string
-	roomIDs    []string
-	room2IDs   []string
+	floorIDs   [16]string
+	floor2IDs  [16]string
+	roadIDs    [16]string
+	wallIDs    [16]string
+	wall2IDs   [16]string
+	roomIDs    [16]string
+	room2IDs   [16]string
 	doorH      string
 	doorV      string
 	stairsUp   string
 	stairsDown string
-	treeIDs    []string
+	treeIDs    [16]string
+	grassIDs   [16]string
+
+	// Flavour tiles - randomly chosen
+	signIDs       []string
+	wallSignIDs   []string // signs that hang off walls TODO: by shop type
+	hangingIDs    []string
+	windowIDs     []string
+	counterHIDs   [3]string // 3 IDs, left middle end
+	counterVIDs   [3]string // 3 IDs, top middle bottom
+	shopkeeperIDs []string
+	shelfID       string    // TODO: per item type
+	stockIDs      []string  // TODO: per item type
+	tableID       string    // TODO: furniture sets
+	chairIDs      [2]string // left/right TODO: furniture sets
+	rugIDs        [16]string
+	potIDs        []string
+	assistantIDs  []string
+	playerIDs     []string
 
 	// Parameters used for template export
-	Width        int
-	Height       int
-	CSV          string
-	CSVFurniture string
+	Width  int
+	Height int
+	CSVs   []csvExport
 }
 
 // DawnLikeTemplate - using DawnLike tile set
 var DawnLikeTemplate = TMXTemplate{
 	"dawnlike",
-	[]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
-	[]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
-	[]string{"1183", "1162", "1163", "1184", "1205", "1204", "1203", "1182", "1161", "1187", "1185", "1164", "1188", "1206", "1186", "1166"},
-	[]string{"92", "72", "70", "93", "110", "112", "108", "91", "68", "69", "88", "88", "110", "89", "108", "71"},
-	[]string{"85", "65", "63", "86", "103", "105", "101", "84", "61", "62", "81", "81", "103", "82", "101", "64"},
-	[]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
-	[]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
+	[16]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
+	[16]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
+	[16]string{"1183", "1162", "1163", "1184", "1205", "1204", "1203", "1182", "1161", "1187", "1185", "1164", "1188", "1206", "1186", "1166"},
+	[16]string{"92", "72", "70", "93", "110", "112", "108", "91", "68", "69", "88", "88", "110", "89", "108", "71"},
+	[16]string{"85", "65", "63", "86", "103", "105", "101", "84", "61", "62", "81", "81", "103", "82", "101", "64"},
+	[16]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
+	[16]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
 	"2096", "2097",
 	"3304", "3305",
-	[]string{"2537", "2525", "2526", "2538", "2550", "2549", "2548", "2536", "2524", "2540", "2528", "2529", "2541", "2553", "2552", "2527"},
-	0, 0, "", ""}
+	[16]string{"2537", "2525", "2526", "2538", "2550", "2549", "2548", "2536", "2524", "2540", "2528", "2529", "2541", "2553", "2552", "2527"},
+	[16]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
+	[]string{"2177", "2178", "2181", "2182"},
+	[]string{"2185", "2186", "2187", "2188", "2189", "2190", "2191"},
+	[]string{"2168", "2169", "2170", "2171", "2172", "2173", "2174", "2200", "2201", "2202", "2203", "2204", "2205", "2206", "2207", "2144", "2148"},
+	[]string{"2144", "2148"},
+	[3]string{"2216", "2217", "2218"},
+	[3]string{"2219", "2220", "2221"},
+	[]string{"2968", "2969", "2970", "2971", "2972"},
+	"2226",
+	[]string{"4657", "4659", "4661", "4664", "4667", "4668", "4672", "4675", "4676", "4680", "4682", "4684", "4688", "4690", "4712", "4714", "4716", "4720"},
+	"2193",
+	[2]string{"2192", "2194"},
+	[16]string{"2257", "2249", "2250", "2258", "2266", "2265", "2264", "2256", "2248", "2257", "2257", "2257", "2257", "2257", "2257", "2257"},
+	[]string{"4464", "4465", "4472", "2160", "2161", "2162", "2163", "2164", "2165", "2225", "2227", "2229"},
+	[]string{"2992", "2993"},
+	[]string{"2393", "2394", "2395", "2396", "2397", "2398", "2399", "2400", "2401", "2402", "2403", "2404", "2405", "2406", "2407", "2408", "2409", "2410", "2424", "2425", "2426", "2427", "2428", "2429", "2430", "2431"},
+	0, 0, []csvExport{}}
 
 // ToTMX - export map as TMX (Tiled XML map)
 func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
@@ -114,68 +156,130 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 	if err != nil {
 		return err
 	}
-	t.Execute(templateFile, tmxTemplate)
+	if err := t.Execute(templateFile, tmxTemplate); err != nil {
+		return err
+	}
 	return nil
 }
 
-func populateTemplate(m Map, tmxTemplate *TMXTemplate) {
-	tmxTemplate.Width = m.Width
-	tmxTemplate.Height = m.Height
-	var makeCSV = func(l *Layer, tileLayer *Layer) string {
-		exportTiles := make([]string, l.Width*l.Height)
+func populateTemplate(m Map, tmp *TMXTemplate) {
+	tmp.Width = m.Width
+	tmp.Height = m.Height
+	var makeCSV = func(l *Layer, wallLayer *Layer) csvExport {
+		xt := make([]string, l.Width*l.Height)
 		for y := 0; y < l.Height; y++ {
 			for x := 0; x < l.Width; x++ {
 				tile := l.getTile(x, y)
-				var tileIDs []string
+				var tileIDs *[16]string
 				switch tile {
 				case nothing:
-					exportTiles[x+y*l.Width] = "0"
-					continue
+					xt[x+y*l.Width] = "0"
 				case floor:
-					tileIDs = tmxTemplate.floorIDs
+					tileIDs = &tmp.floorIDs
 				case floor2:
-					tileIDs = tmxTemplate.floor2IDs
-				case floor3:
-					tileIDs = tmxTemplate.floor3IDs
+					tileIDs = &tmp.floor2IDs
+				case road:
+					tileIDs = &tmp.roadIDs
 				case wall:
-					tileIDs = tmxTemplate.wallIDs
+					tileIDs = &tmp.wallIDs
 				case wall2:
-					tileIDs = tmxTemplate.wall2IDs
+					tileIDs = &tmp.wall2IDs
 				case room:
-					tileIDs = tmxTemplate.roomIDs
+					tileIDs = &tmp.roomIDs
 				case room2:
-					tileIDs = tmxTemplate.room2IDs
+					tileIDs = &tmp.room2IDs
 				case door:
 					left := wall
 					if x > 0 {
-						left = tileLayer.getTile(x-1, y)
+						left = wallLayer.getTile(x-1, y)
 					}
 					if IsWall(left) {
-						exportTiles[x+y*l.Width] = tmxTemplate.doorH
+						xt[x+y*l.Width] = tmp.doorH
 					} else {
-						exportTiles[x+y*l.Width] = tmxTemplate.doorV
+						xt[x+y*l.Width] = tmp.doorV
 					}
-					continue
 				case stairsUp:
-					exportTiles[x+y*l.Width] = tmxTemplate.stairsUp
-					continue
+					xt[x+y*l.Width] = tmp.stairsUp
 				case stairsDown:
-					exportTiles[x+y*l.Width] = tmxTemplate.stairsDown
-					continue
+					xt[x+y*l.Width] = tmp.stairsDown
 				case tree:
-					exportTiles[x+y*l.Width] = get16Tile2(m, x, y, tile, tmxTemplate.treeIDs)
-					continue
+					xt[x+y*l.Width] = get16Tile2(m, x, y, tile, &tmp.treeIDs)
+				case grass:
+					tileIDs = &tmp.grassIDs
+				case sign:
+					// choose from on-wall sign or stand-alone sign
+					if IsWall(wallLayer.getTile(x, y)) {
+						xt[x+y*l.Width] = tmp.wallSignIDs[rand.Intn(len(tmp.wallSignIDs))]
+					} else {
+						xt[x+y*l.Width] = tmp.signIDs[rand.Intn(len(tmp.signIDs))]
+					}
+				case hanging:
+					xt[x+y*l.Width] = tmp.hangingIDs[rand.Intn(len(tmp.hangingIDs))]
+				case window:
+					xt[x+y*l.Width] = tmp.windowIDs[rand.Intn(len(tmp.windowIDs))]
+				case counter:
+					top := y > 0 && l.getTile(x, y-1) == counter
+					bottom := y < l.Height-1 && l.getTile(x, y+1) == counter
+					left := x > 0 && l.getTile(x-1, y) == counter
+					right := x < l.Width-1 && l.getTile(x+1, y) == counter
+					switch {
+					case left && right:
+						xt[x+y*l.Width] = tmp.counterHIDs[1]
+					case top && bottom:
+						xt[x+y*l.Width] = tmp.counterVIDs[1]
+					case left:
+						xt[x+y*l.Width] = tmp.counterHIDs[2]
+					case right:
+						xt[x+y*l.Width] = tmp.counterHIDs[0]
+					case top:
+						xt[x+y*l.Width] = tmp.counterVIDs[2]
+					case bottom:
+						xt[x+y*l.Width] = tmp.counterVIDs[0]
+					}
+				case shopkeeper:
+					xt[x+y*l.Width] = tmp.shopkeeperIDs[rand.Intn(len(tmp.shopkeeperIDs))]
+				case shelf:
+					xt[x+y*l.Width] = tmp.shelfID
+				case stock:
+					xt[x+y*l.Width] = tmp.stockIDs[rand.Intn(len(tmp.stockIDs))]
+				case table:
+					xt[x+y*l.Width] = tmp.tableID
+				case chair:
+					// Find the table to face
+					if x == 0 || l.getTile(x-1, y) == table {
+						xt[x+y*l.Width] = tmp.chairIDs[1]
+					} else {
+						xt[x+y*l.Width] = tmp.chairIDs[0]
+					}
+				case rug:
+					tileIDs = &tmp.rugIDs
+				case pot:
+					xt[x+y*l.Width] = tmp.potIDs[rand.Intn(len(tmp.potIDs))]
+				case assistant:
+					xt[x+y*l.Width] = tmp.assistantIDs[rand.Intn(len(tmp.assistantIDs))]
+				case player:
+					xt[x+y*l.Width] = tmp.playerIDs[rand.Intn(len(tmp.playerIDs))]
+				default:
+					fmt.Println("Unhandled tile", tile)
+					panic(tile)
 				}
-				exportTiles[x+y*l.Width] = get16Tile(m, x, y, tile, tileIDs)
+				if tileIDs != nil {
+					xt[x+y*l.Width] = get16Tile(m, x, y, tile, tileIDs)
+				}
 			}
 		}
-		return strings.Join(exportTiles, ",")
+		var xtline []string
+		for y := 0; y < l.Height; y++ {
+			xtline = append(xtline, strings.Join(xt[y*l.Width:(y+1)*l.Width], ","))
+		}
+		return csvExport{l.Name, l.Width, l.Height, strings.Join(xtline, ",\n")}
 	}
-	tmxTemplate.CSV = makeCSV(m.Layer("Tiles"), m.Layer("Tiles"))
-	tmxTemplate.CSVFurniture = makeCSV(m.Layer("Furniture"), m.Layer("Tiles"))
+	for _, l := range m.Layers {
+		tmp.CSVs = append(tmp.CSVs, makeCSV(l, m.Layer("Structures")))
+	}
 }
 
-func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
+func get16Tile(m Map, x, y int, tile rune, templateTiles *[16]string) string {
 	up := hasSameTile(m, x, y-1, tile)
 	right := hasSameTile(m, x+1, y, tile)
 	down := hasSameTile(m, x, y+1, tile)
@@ -232,7 +336,7 @@ func get16Tile(m Map, x, y int, tile rune, templateTiles []string) string {
 	panic("unknown error")
 }
 
-func get16Tile2(m Map, x, y int, tile rune, templateTiles []string) string {
+func get16Tile2(m Map, x, y int, tile rune, templateTiles *[16]string) string {
 	up := hasSameTile(m, x, y-1, tile)
 	upright := hasSameTile(m, x+1, y-1, tile)
 	right := hasSameTile(m, x+1, y, tile)
