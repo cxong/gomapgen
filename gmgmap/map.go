@@ -127,9 +127,10 @@ func (m Map) Print() {
 		// Interior cells
 		for x := 0; x < m.Width; x++ {
 			// Print the top-most cell in the Layers
-			for index, layer := range m.Layers {
-				tile := layer.getTile(x, y)
-				if index == len(m.Layers)-1 || tile != nothing {
+			for i := len(m.Layers) - 1; i >= 0; i-- {
+				l := m.Layers[i]
+				tile := l.getTile(x, y)
+				if i == 0 || tile != nothing {
 					fmt.Printf("%c", tile)
 					break
 				}

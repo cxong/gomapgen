@@ -1,9 +1,6 @@
 package gmgmap
 
-import (
-	"fmt"
-	"math/rand"
-)
+import "math/rand"
 
 // NewShop - create a single shop, surrounded by road tiles.
 // A shop contains the following elements:
@@ -142,19 +139,20 @@ func NewShop(width, height int) *Map {
 	}
 
 	// Items against walls - pots
-	for i := 0; i < f.Width*f.Height*100; i++ {
+	for i := 0; i < (f.Width+f.Height)*4; i++ {
 		x := rand.Intn(f.Width-4) + 2
 		y := rand.Intn(f.Height-5) + 2
 		if x != 2 && x != f.Width-3 && y != 2 && y != f.Height-4 {
 			continue
 		}
 		// Check that the 1 radius around is free of furniture that is not pots or
-		// counters or hangings
-		clear := true
-		for x1 := x - 1; x1 <= x+1; x1++ {
-			for y1 := y - 1; y1 < y+1; y1++ {
-				tile := f.getTile(x1, y1)
-				if tile != pot && tile != counter && tile != hanging {
+		// counters or hangings, and shopkeepers
+		clear := c.isClear(x-1, y-1, 3, 3)
+		for x1 := x - 1; x1 <= x+1 && clear; x1++ {
+			for y1 := y - 1; y1 <= y+1 && clear; y1++ {
+				furniture := f.getTile(x1, y1)
+				if furniture != nothing && furniture != pot && furniture != counter &&
+					furniture != hanging {
 					clear = false
 				}
 			}
@@ -192,10 +190,6 @@ func NewShop(width, height int) *Map {
 				break
 			}
 		}
-	}
-
-	for i, l := range m.Layers {
-		fmt.Println("Layer", i, l.Name)
 	}
 
 	return m
