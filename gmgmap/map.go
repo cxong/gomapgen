@@ -54,8 +54,6 @@ func NewMap(width, height int) *Map {
 	m := new(Map)
 	m.Width = width
 	m.Height = height
-	m.Layers = append(m.Layers, newLayer("Ground", width, height))
-	m.Layers = append(m.Layers, newLayer("Structures", width, height))
 	return m
 }
 

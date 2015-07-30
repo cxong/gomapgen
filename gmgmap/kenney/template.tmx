@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="{{.Width}}" height="{{.Height}}" tilewidth="16" tileheight="16" backgroundcolor="#000000" nextobjectid="1">
+ <tileset firstgid="1" name="Base" tilewidth="16" tileheight="16" spacing="1">
+  <image source="roguelikeSheet_transparent.png" width="968" height="526"/>
+ </tileset>
+ <tileset firstgid="1768" name="Indoor" tilewidth="16" tileheight="16" spacing="1">
+  <image source="roguelikeIndoor_transparent.png" width="457" height="305"/>
+ </tileset>
+ <tileset firstgid="2236" name="Characters" tilewidth="16" tileheight="16" spacing="1">
+  <image source="roguelikeChar_transparent.png" width="918" height="203"/>
+ </tileset>
+{{range .CSVs}} <layer name="{{.Name}}" width="{{.Width}}" height="{{.Height}}">
+  <data encoding="csv">
+{{.Values}}
+  </data>
+ </layer>{{end}}
+</map>

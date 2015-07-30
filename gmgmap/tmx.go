@@ -22,15 +22,16 @@ type csvExport struct {
 
 // TMXTemplate - configuration for TMX export
 type TMXTemplate struct {
-	path string
+	path       string
+	background string
 	// Arrays of tile ids (16);
 	// first is centre,
 	// then 8 tiles from top clockwise,
 	// then h/v,
 	// then 4 end tiles from top clockwise,
-	// then isolated tile\
-	floorIDs   [16]string
-	floor2IDs  [16]string
+	// then isolated tile
+	floorIDs [16]string
+	//floor2IDs  [16]string
 	roadIDs    [16]string
 	wallIDs    [16]string
 	wall2IDs   [16]string
@@ -40,8 +41,15 @@ type TMXTemplate struct {
 	doorV      string
 	stairsUp   string
 	stairsDown string
-	treeIDs    [16]string
-	grassIDs   [16]string
+	// note: trees use different tiling system
+	// centre
+	// 8 tiles from top clockwise
+	// 4 concaves from upper right clockwise
+	// upleft/downright diagonal
+	// upright/downleft diagonal
+	// isolated
+	treeIDs  [16]string
+	grassIDs [16]string
 
 	// Flavour tiles - randomly chosen
 	signIDs       []string
@@ -65,37 +73,6 @@ type TMXTemplate struct {
 	Height int
 	CSVs   []csvExport
 }
-
-// DawnLikeTemplate - using DawnLike tile set
-var DawnLikeTemplate = TMXTemplate{
-	"dawnlike",
-	[16]string{"1421", "1400", "1401", "1422", "1443", "1442", "1441", "1420", "1399", "1425", "1423", "1402", "1426", "1444", "1424", "1404"},
-	[16]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
-	[16]string{"1183", "1162", "1163", "1184", "1205", "1204", "1203", "1182", "1161", "1187", "1185", "1164", "1188", "1206", "1186", "1166"},
-	[16]string{"92", "72", "70", "93", "110", "112", "108", "91", "68", "69", "88", "88", "110", "89", "108", "71"},
-	[16]string{"85", "65", "63", "86", "103", "105", "101", "84", "61", "62", "81", "81", "103", "82", "101", "64"},
-	[16]string{"1428", "1407", "1408", "1429", "1450", "1449", "1448", "1427", "1406", "1432", "1430", "1409", "1433", "1451", "1431", "1411"},
-	[16]string{"1232", "1211", "1212", "1233", "1254", "1253", "1252", "1231", "1210", "1236", "1234", "1213", "1237", "1255", "1235", "1215"},
-	"2096", "2097",
-	"3304", "3305",
-	[16]string{"2537", "2525", "2526", "2538", "2550", "2549", "2548", "2536", "2524", "2540", "2528", "2529", "2541", "2553", "2552", "2527"},
-	[16]string{"1176", "1155", "1156", "1177", "1198", "1197", "1196", "1175", "1154", "1180", "1178", "1157", "1181", "1199", "1179", "1159"},
-	[]string{"2177", "2178", "2181", "2182"},
-	[]string{"2185", "2186", "2187", "2188", "2189", "2190", "2191"},
-	[]string{"2168", "2169", "2170", "2171", "2172", "2173", "2174", "2200", "2201", "2202", "2203", "2204", "2205", "2206", "2207", "2144", "2148"},
-	[]string{"2144", "2148"},
-	[3]string{"2216", "2217", "2218"},
-	[3]string{"2219", "2220", "2221"},
-	[]string{"2968", "2969", "2970", "2971", "2972"},
-	"2226",
-	[]string{"4657", "4659", "4661", "4664", "4667", "4668", "4672", "4675", "4676", "4680", "4682", "4684", "4688", "4690", "4712", "4714", "4716", "4720"},
-	"2193",
-	[2]string{"2192", "2194"},
-	[16]string{"2257", "2249", "2250", "2258", "2266", "2265", "2264", "2256", "2248", "2257", "2257", "2257", "2257", "2257", "2257", "2257"},
-	[]string{"4464", "4465", "4472", "2160", "2161", "2162", "2163", "2164", "2165", "2225", "2227", "2229"},
-	[]string{"2992", "2993"},
-	[]string{"2393", "2394", "2395", "2396", "2397", "2398", "2399", "2400", "2401", "2402", "2403", "2404", "2405", "2406", "2407", "2408", "2409", "2410", "2424", "2425", "2426", "2427", "2428", "2429", "2430", "2431"},
-	0, 0, []csvExport{}}
 
 // ToTMX - export map as TMX (Tiled XML map)
 func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
@@ -165,6 +142,13 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 func populateTemplate(m Map, tmp *TMXTemplate) {
 	tmp.Width = m.Width
 	tmp.Height = m.Height
+	var arrayToCSV = func(xt []string, w, h int) string {
+		var xtline []string
+		for y := 0; y < h; y++ {
+			xtline = append(xtline, strings.Join(xt[y*w:(y+1)*w], ","))
+		}
+		return strings.Join(xtline, ",\n")
+	}
 	var makeCSV = func(l *Layer, wallLayer *Layer) csvExport {
 		xt := make([]string, l.Width*l.Height)
 		for y := 0; y < l.Height; y++ {
@@ -176,8 +160,8 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 					xt[x+y*l.Width] = "0"
 				case floor:
 					tileIDs = &tmp.floorIDs
-				case floor2:
-					tileIDs = &tmp.floor2IDs
+				//case floor2:
+				//tileIDs = &tmp.floor2IDs
 				case road:
 					tileIDs = &tmp.roadIDs
 				case wall:
@@ -268,12 +252,17 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 				}
 			}
 		}
-		var xtline []string
-		for y := 0; y < l.Height; y++ {
-			xtline = append(xtline, strings.Join(xt[y*l.Width:(y+1)*l.Width], ","))
-		}
-		return csvExport{l.Name, l.Width, l.Height, strings.Join(xtline, ",\n")}
+		return csvExport{l.Name, l.Width, l.Height,
+			arrayToCSV(xt, l.Width, l.Height)}
 	}
+	// Add a background layer export for appearance
+	backArr := make([]string, m.Width*m.Height)
+	for i := 0; i < len(backArr); i++ {
+		backArr[i] = tmp.background
+	}
+	tmp.CSVs = append(tmp.CSVs,
+		csvExport{"Background", m.Width, m.Height,
+			arrayToCSV(backArr, m.Width, m.Height)})
 	for _, l := range m.Layers {
 		tmp.CSVs = append(tmp.CSVs, makeCSV(l, m.Layer("Structures")))
 	}

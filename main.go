@@ -11,6 +11,7 @@ import (
 
 func main() {
 	algo := flag.String("algo", "shop", "generation algorithm: cell/rogue/shop/walk")
+	template := flag.String("template", "dawnlike", "TMX export template: dawnlike/kenney")
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
 	iterations := flag.Int("iterations", 3000, "number of iterations for random walk algo")
@@ -46,8 +47,14 @@ func main() {
 	// print
 	m.Print()
 	// export TMX
-	template := gmgmap.DawnLikeTemplate
-	if err := m.ToTMX(&template); err != nil {
+	t := &gmgmap.DawnLikeTemplate
+	switch *template {
+	case "dawnlike":
+		t = &gmgmap.DawnLikeTemplate
+	case "kenney":
+		t = &gmgmap.KenneyTemplate
+	}
+	if err := m.ToTMX(t); err != nil {
 		panic(err)
 	}
 }
