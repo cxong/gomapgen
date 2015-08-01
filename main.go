@@ -10,11 +10,11 @@ import (
 )
 
 func main() {
-	algo := flag.String("algo", "shop", "generation algorithm: cell/rogue/shop/walk")
+	algo := flag.String("algo", "shop", "generation algorithm: bsp/cell/rogue/shop/walk")
 	template := flag.String("template", "dawnlike", "TMX export template: dawnlike/kenney")
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
-	iterations := flag.Int("iterations", 3000, "number of iterations for random walk algo")
+	iterations := flag.Int("iterations", 3000, "number of iterations for walk algo")
 	gridWidth := flag.Int("gridwidth", 3, "grid size, for rogue algo")
 	gridHeight := flag.Int("gridheight", 3, "grid size, for rogue algo")
 	minRoomPct := flag.Int("minroompct", 50, "percent of rooms per grid, for rogue algo")
@@ -26,6 +26,7 @@ func main() {
 	r21 := flag.Int("r21", 5, "R1 cutoff rep 2, for cell algo")
 	r22 := flag.Int("r22", -1, "R2 cutoff rep 2, for cell algo")
 	reps2 := flag.Int("reps2", 3, "reps for rep 2, for cell algo")
+	splits := flag.Int("splits", 5, "number of splits for bsp algo")
 	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "random seed")
 	flag.Parse()
 	// make map
@@ -33,6 +34,8 @@ func main() {
 	rand.Seed(*seed)
 	m := gmgmap.NewMap(*width, *height)
 	switch *algo {
+	case "bsp":
+		m = gmgmap.NewBSP(*width, *height, *splits)
 	case "cell":
 		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct,
 			*r11, *r12, *reps1, *r21, *r22, *reps2)
