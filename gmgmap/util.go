@@ -34,6 +34,20 @@ func randomWalk(x, y, w, h int) (int, int) {
 	}
 }
 
+func imin(i1, i2 int) int {
+	if i1 < i2 {
+		return i1
+	}
+	return i2
+}
+
+func imax(i1, i2 int) int {
+	if i1 > i2 {
+		return i1
+	}
+	return i2
+}
+
 func iclamp(v, min, max int) int {
 	switch {
 	case v < min:
@@ -43,4 +57,11 @@ func iclamp(v, min, max int) int {
 	default:
 		return v
 	}
+}
+
+func irand(min, max int) int {
+	if min == max {
+		return min
+	}
+	return rand.Intn(max-min) + min
 }

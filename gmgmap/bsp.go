@@ -19,50 +19,86 @@ func NewBSP(width, height, iterations int) *Map {
 	m := NewMap(width, height)
 
 	// Split the map for a number of iterations, choosing random axis and location
-	var rooms []bspRoom
-	rooms = append(rooms, bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0})
-	for i := 0; i < len(rooms); i++ {
-		room := &rooms[i]
-		if room.level == iterations-1 {
+	var areas []bspRoom
+	areas = append(areas, bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0})
+	for i := 0; i < len(areas); i++ {
+		if areas[i].level == iterations {
 			break
 		}
-		if r1, r2, err := split(room, i); err == nil {
-			room.child1 = len(rooms)
-			rooms = append(rooms, r1)
-			room.child2 = len(rooms)
-			rooms = append(rooms, r2)
+		if r1, r2, err := split(&areas[i], i); err == nil {
+			areas[i].child1 = len(areas)
+			areas = append(areas, r1)
+			areas[i].child2 = len(areas)
+			areas = append(areas, r2)
 		}
 	}
 
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
+	rooms := make([]bspRoom, len(areas))
 	// Place rooms randomly into the split areas
-	for i := range rooms {
-		if rooms[i].child1 < 0 && rooms[i].child2 < 0 {
+	for i := range areas {
+		rooms[i] = areas[i]
+		if areas[i].child1 < 0 && areas[i].child2 < 0 {
 			var r rect
 			// make sure center of area is inside room
-			if rooms[i].r.w == minRoomSize {
+			if areas[i].r.w == minRoomSize {
 				r.w = minRoomSize
-				r.x = rooms[i].r.x
+				r.x = areas[i].r.x
 			} else {
-				r.w = rand.Intn(rooms[i].r.w-minRoomSize) + minRoomSize
-				r.x = rand.Intn(rooms[i].r.w-r.w) + rooms[i].r.x
-				xmid := rooms[i].r.x + rooms[i].r.w/2
-				r.x = iclamp(r.x, xmid-(r.w-1), xmid-1)
+				r.w = rand.Intn(areas[i].r.w-minRoomSize) + minRoomSize
+				r.x = rand.Intn(areas[i].r.w-r.w) + areas[i].r.x
+				xmid := areas[i].r.x + areas[i].r.w/2
+				r.x = iclamp(r.x, xmid-(r.w-2), xmid-1)
 			}
-			if rooms[i].r.h == minRoomSize {
+			if areas[i].r.h == minRoomSize {
 				r.h = minRoomSize
-				r.y = rooms[i].r.y
+				r.y = areas[i].r.y
 			} else {
-				r.h = rand.Intn(rooms[i].r.h-minRoomSize) + minRoomSize
-				r.y = rand.Intn(rooms[i].r.h-r.h) + rooms[i].r.y
-				ymid := rooms[i].r.y + rooms[i].r.h/2
-				r.y = iclamp(r.y, ymid-(r.h-1), ymid-1)
+				r.h = rand.Intn(areas[i].r.h-minRoomSize) + minRoomSize
+				r.y = rand.Intn(areas[i].r.h-r.h) + areas[i].r.y
+				ymid := areas[i].r.y + areas[i].r.h/2
+				r.y = iclamp(r.y, ymid-(r.h-2), ymid-1)
 			}
 			g.rectangle(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, room, true)
 			s.rectangle(r, wall2, false)
+			rm := areas[i]
+			rm.r = r
+			rooms[i] = rm
+		} else {
+			// Don't put rooms here
+			rooms[i].r.w, rooms[i].r.h = 0, 0
 		}
 	}
+
+	// Connect leaves to siblings
+	for i := range rooms {
+		if rooms[i].parent < 0 || rooms[i].child1 >= 0 || rooms[i].child2 >= 0 {
+			continue
+		}
+		// Only connect to second sibling, so we don't double up
+		// Also needs to have siblings
+		siblingIndex := rooms[rooms[i].parent].child2
+		if siblingIndex == i || siblingIndex < 0 {
+			continue
+		}
+		r := rooms[i]
+		sibling := rooms[siblingIndex]
+		xmin := imax(r.r.x, sibling.r.x)
+		xmax := imin(r.r.x+r.r.w, sibling.r.x+sibling.r.w)
+		ymin := imax(r.r.y, sibling.r.y)
+		ymax := imin(r.r.y+r.r.h, sibling.r.y+sibling.r.h)
+		if xmin+1 < xmax-1 {
+			// connect from top to bottom
+			x := irand(xmin+1, xmax-1)
+			addCorridor(g, s, x, ymax-1, x, ymin, 0, 1, room2)
+		} else if ymin+1 < ymax-1 {
+			// Connect from left to right
+			y := irand(ymin+1, ymax-1)
+			addCorridor(g, s, xmax-1, y, xmin, y, 1, 0, room2)
+		}
+	}
+
 	return m
 }
 

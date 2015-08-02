@@ -184,3 +184,44 @@ func (l Layer) countTiles(x, y, r int, tile rune) int {
 func IsWall(tile rune) bool {
 	return tile == wall || tile == wall2
 }
+
+func addCorridor(g, s *Layer, startX, startY, endX, endY, dx, dy int, tile rune) {
+	var dxAlt, dyAlt int
+	var halfX, halfY int
+	if dx > 0 {
+		// horizontal
+		dxAlt, dyAlt = 0, 1
+		halfX, halfY = (endX-startX)/2+startX, endY+1
+		if endY < startY {
+			dyAlt = -1
+			halfY = endY - 1
+		}
+	} else {
+		// vertical
+		dxAlt, dyAlt = 1, 0
+		halfX, halfY = endX+1, (endY-startY)/2+startY
+		if endX < startX {
+			dxAlt = -1
+			halfX = endX - 1
+		}
+	}
+	set := func(x, y int) {
+		g.setTile(x, y, tile)
+		// Clear walls in the way
+		s.setTile(x, y, nothing)
+	}
+	// Initial direction
+	x, y := startX, startY
+	for ; x != halfX && y != halfY; x, y = x+dx, y+dy {
+		set(x, y)
+	}
+	// Turn
+	for ; x != endX && y != endY; x, y = x+dxAlt, y+dyAlt {
+		set(x, y)
+	}
+	// Finish
+	for ; x != endX || y != endY; x, y = x+dx, y+dy {
+		set(x, y)
+	}
+	set(endX, endY)
+}
