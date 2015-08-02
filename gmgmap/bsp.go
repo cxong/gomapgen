@@ -65,15 +65,13 @@ func NewBSP(width, height, iterations int) *Map {
 			rm := areas[i]
 			rm.r = r
 			rooms[i] = rm
-		} else {
-			// Don't put rooms here
-			rooms[i].r.w, rooms[i].r.h = 0, 0
 		}
 	}
 
 	// Connect leaves to siblings
 	for i := range rooms {
-		if rooms[i].parent < 0 || rooms[i].child1 >= 0 || rooms[i].child2 >= 0 {
+		r := rooms[i]
+		if r.parent < 0 || r.child1 >= 0 || r.child2 >= 0 {
 			continue
 		}
 		// Only connect to second sibling, so we don't double up
@@ -82,8 +80,11 @@ func NewBSP(width, height, iterations int) *Map {
 		if siblingIndex == i || siblingIndex < 0 {
 			continue
 		}
-		r := rooms[i]
+		// Sibling also needs to be leaf
 		sibling := rooms[siblingIndex]
+		if sibling.child1 >= 0 || sibling.child2 >= 0 {
+			continue
+		}
 		xmin := imax(r.r.x, sibling.r.x)
 		xmax := imin(r.r.x+r.r.w, sibling.r.x+sibling.r.w)
 		ymin := imax(r.r.y, sibling.r.y)
