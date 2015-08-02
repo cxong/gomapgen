@@ -12,7 +12,7 @@ type bspRoom struct {
 	level          int
 }
 
-const minRoomSize = 3
+const minRoomSize = 4
 
 // NewBSP - generate a new dungeon, using BSP method
 func NewBSP(width, height, iterations int) *Map {
@@ -40,12 +40,15 @@ func NewBSP(width, height, iterations int) *Map {
 	for i := range rooms {
 		if rooms[i].child1 < 0 && rooms[i].child2 < 0 {
 			var r rect
+			// make sure center of area is inside room
 			if rooms[i].r.w == minRoomSize {
 				r.w = minRoomSize
 				r.x = rooms[i].r.x
 			} else {
 				r.w = rand.Intn(rooms[i].r.w-minRoomSize) + minRoomSize
 				r.x = rand.Intn(rooms[i].r.w-r.w) + rooms[i].r.x
+				xmid := rooms[i].r.x + rooms[i].r.w/2
+				r.x = iclamp(r.x, xmid-(r.w-1), xmid-1)
 			}
 			if rooms[i].r.h == minRoomSize {
 				r.h = minRoomSize
@@ -53,6 +56,8 @@ func NewBSP(width, height, iterations int) *Map {
 			} else {
 				r.h = rand.Intn(rooms[i].r.h-minRoomSize) + minRoomSize
 				r.y = rand.Intn(rooms[i].r.h-r.h) + rooms[i].r.y
+				ymid := rooms[i].r.y + rooms[i].r.h/2
+				r.y = iclamp(r.y, ymid-(r.h-1), ymid-1)
 			}
 			g.rectangle(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, room, true)
 			s.rectangle(r, wall2, false)
@@ -62,7 +67,8 @@ func NewBSP(width, height, iterations int) *Map {
 }
 
 func split(room *bspRoom, i int) (bspRoom, bspRoom, error) {
-	if rand.Intn(2) == 0 {
+	// If more than 3:2, split the long dimension, otherwise randomise
+	if room.r.w*3 > room.r.h*2 || (room.r.h*3 < room.r.w*2 && rand.Intn(2) == 0) {
 		// Split horizontally
 		r := room.r.w - minRoomSize*2
 		var x int

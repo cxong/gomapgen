@@ -33,3 +33,14 @@ func randomWalk(x, y, w, h int) (int, int) {
 		}
 	}
 }
+
+func iclamp(v, min, max int) int {
+	switch {
+	case v < min:
+		return min
+	case v > max:
+		return max
+	default:
+		return v
+	}
+}
