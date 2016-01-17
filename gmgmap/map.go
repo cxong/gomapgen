@@ -86,6 +86,10 @@ func (l *Layer) setTile(x, y int, tile rune) {
 	l.Tiles[x+y*l.Width] = tile
 }
 
+func (l Layer) isIn(x, y int) bool {
+	return x >= 0 && x < l.Width && y >= 0 && y < l.Height
+}
+
 // Fill the map with a single tile type
 func (l *Layer) fill(tile rune) {
 	for y := 0; y < l.Height; y++ {
@@ -104,6 +108,14 @@ func (l *Layer) rectangle(r rect, tile rune, filled bool) {
 			}
 		}
 	}
+}
+
+func (l *Layer) rectangleFilled(r rect, tile rune) {
+	l.rectangle(r, tile, true)
+}
+
+func (l *Layer) rectangleUnfilled(r rect, tile rune) {
+	l.rectangle(r, tile, false)
 }
 
 // Print - print map in ascii, with a border
@@ -185,6 +197,8 @@ func IsWall(tile rune) bool {
 	return tile == wall || tile == wall2
 }
 
+// Add a corridor with two turns
+// This can connect any two points; the S-shaped turn occurs at the middle
 func addCorridor(g, s *Layer, startX, startY, endX, endY, dx, dy int, tile rune) {
 	var dxAlt, dyAlt int
 	var halfX, halfY int

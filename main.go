@@ -26,7 +26,9 @@ func main() {
 	r21 := flag.Int("r21", 5, "R1 cutoff rep 2, for cell algo")
 	r22 := flag.Int("r22", -1, "R2 cutoff rep 2, for cell algo")
 	reps2 := flag.Int("reps2", 3, "reps for rep 2, for cell algo")
-	splits := flag.Int("splits", 5, "number of splits for bsp algo")
+	splits := flag.Int("splits", 4, "number of splits for bsp algo")
+	minRoomSize := flag.Int("minroomsize", 5, "minimum room width/height for bsp algo")
+	connectionIterations := flag.Int("connectioniterations", 15, "iterations for connection phase for bsp algo")
 	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "random seed")
 	flag.Parse()
 	// make map
@@ -35,7 +37,7 @@ func main() {
 	m := gmgmap.NewMap(*width, *height)
 	switch *algo {
 	case "bsp":
-		m = gmgmap.NewBSP(*width, *height, *splits)
+		m = gmgmap.NewBSP(*width, *height, *splits, *minRoomSize, *connectionIterations)
 	case "cell":
 		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct,
 			*r11, *r12, *reps1, *r21, *r22, *reps2)
