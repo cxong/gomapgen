@@ -85,13 +85,13 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 			aymin, aymax := getYRange(*g, a.r)
 			symin, symax := getYRange(*g, sibling.r)
 			y := irand(imax(aymin, symin), imin(aymax, symax))
-			addStraightCorridor(g, s, a.r.x+a.r.w, y, 1, 0, room2)
+			addStraightCorridor(g, s, a.r.x+a.r.w, y, 1, 0, room2, wall2)
 		} else {
 			// Connect up/down
 			axmin, axmax := getXRange(*g, a.r)
 			sxmin, sxmax := getXRange(*g, sibling.r)
 			x := irand(imax(axmin, sxmin), imin(axmax, sxmax))
-			addStraightCorridor(g, s, x, a.r.y+a.r.h, 0, 1, room2)
+			addStraightCorridor(g, s, x, a.r.y+a.r.h, 0, 1, room2, wall2)
 		}
 	}
 
@@ -140,7 +140,7 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 		}
 		if canDrawInDirection(*g, x, y, dx, dy) {
 			// Draw it
-			addStraightCorridor(g, s, x, y, dx, dy, room2)
+			addStraightCorridor(g, s, x, y, dx, dy, room2, wall2)
 		}
 	}
 
@@ -212,19 +212,35 @@ func getYRange(l Layer, r rect) (int, int) {
 // The corridor will be drawn in two directions, from a central point outwards
 // The ground tile will be drawn into the ground layer, and the structure layer
 // cleared as we draw - like digging out a tunnel
-func addStraightCorridor(g, s *Layer, startX, startY, dx, dy int, tile rune) {
+// Finally, walls are drawn on both sides of the corridor
+func addStraightCorridor(g, s *Layer, startX, startY, dx, dy int, tile, wall rune) {
 	// Draw in positive direction
-	drawInDirection(g, s, startX, startY, dx, dy, tile)
+	drawInDirection(g, s, startX, startY, dx, dy, tile, wall)
 	// Draw in negative direction
-	drawInDirection(g, s, startX, startY, -dx, -dy, tile)
+	drawInDirection(g, s, startX, startY, -dx, -dy, tile, wall)
 }
 
-func drawInDirection(g, s *Layer, startX, startY, dx, dy int, tile rune) {
+func drawInDirection(g, s *Layer, startX, startY, dx, dy int, tile, wall rune) {
 	drawEnd := false
 	for x := startX; !drawEnd; x += dx {
 		for y := startY; !drawEnd; y += dy {
 			g.setTile(x, y, tile)
 			s.setTile(x, y, nothing)
+			if dx == 0 {
+				if s.isIn(x + 1, y) && g.getTile(x + 1, y) == nothing {
+					s.setTile(x + 1, y, wall)
+				}
+				if s.isIn(x - 1, y) && g.getTile(x - 1, y) == nothing {
+					s.setTile(x - 1, y, wall)
+				}
+			} else {
+				if s.isIn(x, y + 1) && g.getTile(x, y + 1) == nothing {
+					s.setTile(x, y + 1, wall)
+				}
+				if s.isIn(x, y - 1) && g.getTile(x, y - 1) == nothing {
+					s.setTile(x, y - 1, wall)
+				}
+			}
 			if hasNeighbouringTile(*g, x, y, dx, dy) {
 				drawEnd = true
 			}
