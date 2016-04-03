@@ -31,6 +31,14 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
       rooms = append(rooms, r2)
     }
   }
+  // Discard non-leaf rooms
+  for i := 0; i < len(rooms); i++ {
+    if rooms[i].child1 >= 0 || rooms[i].child2 >= 0 {
+      rooms[i] = rooms[len(rooms)-1]
+      rooms = rooms[0:len(rooms)-1]
+      i--
+    }
+  }
   // Adjust the rooms;
   // BSP algo produces rooms with non-overlapping walls
   for i := 0; i < len(rooms); i++ {
@@ -46,11 +54,8 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
     rooms[i].r = r
   }
 
-  // Form the room walls using the leaf rooms
+  // Form the room walls
   for i := 0; i < len(rooms); i++ {
-    if rooms[i].child1 >= 0 || rooms[i].child2 >= 0 {
-      continue
-    }
     r := rooms[i].r
     s.rectangleUnfilled(r, wall2)
     groundRect := rect{r.x+1, r.y+1, r.w-2, r.h-2}
@@ -62,10 +67,6 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
   var roomIndices = rand.Perm(len(rooms))
   for i := 0; i < len(roomIndices); i++ {
     room := rooms[roomIndices[i]]
-    // Only choose leaves
-    if room.child1 >= 0 || room.child2 >= 0 {
-      continue
-    }
     lobby = room.r
     // Check if the lobby placement is ok;
     // If it's on the edge or in the interior
