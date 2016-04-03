@@ -15,7 +15,7 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 		if areas[i].level == iterations {
 			break
 		}
-		if r1, r2, err := split(&areas[i], i, minRoomSize); err == nil {
+		if r1, r2, err := bspSplit(&areas[i], i, minRoomSize, 0); err == nil {
 			areas[i].child1 = len(areas)
 			areas = append(areas, r1)
 			areas[i].child2 = len(areas)

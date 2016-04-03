@@ -80,7 +80,15 @@ func bspRoomRoot(width, height int) bspRoom {
 	return bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0}
 }
 
-func split(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, error) {
+func bspSplit(room *bspRoom, i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom, error) {
+	// If the room is too small, then don't split
+	if room.r.w - minRoomSize*2 < 0 && room.r.h - minRoomSize < 0 {
+		return bspRoom{}, bspRoom{}, errors.New("room too small")
+	}
+	// If the room is small enough already, consider not splitting
+	if room.r.w <= maxRoomSize && room.r.h <= maxRoomSize && rand.Intn(2) == 0 {
+		return bspRoom{}, bspRoom{}, errors.New("room is small enough")
+	}
 	// If more than 2:1, split the long dimension, otherwise randomise
 	if room.r.w*2 > room.r.h || (room.r.h*2 < room.r.w && rand.Intn(2) == 0) {
 		// Split horizontally

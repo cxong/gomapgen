@@ -24,7 +24,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
   var rooms []bspRoom
   rooms = append(rooms, bspRoomRoot(width, height))
   for i := 0; i < len(rooms); i++ {
-    if r1, r2, err := split(&rooms[i], i, minRoomSize); err == nil {
+    if r1, r2, err := bspSplit(&rooms[i], i, minRoomSize, maxRoomSize); err == nil {
       rooms[i].child1 = len(rooms)
       rooms = append(rooms, r1)
       rooms[i].child2 = len(rooms)
