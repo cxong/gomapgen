@@ -27,8 +27,13 @@ func main() {
 	r22 := flag.Int("r22", -1, "R2 cutoff rep 2, for cell algo")
 	reps2 := flag.Int("reps2", 3, "reps for rep 2, for cell algo")
 	splits := flag.Int("splits", 4, "number of splits for bsp algo")
-	minRoomSize := flag.Int("minroomsize", 5, "minimum room width/height for bsp algo")
-	connectionIterations := flag.Int("connectioniterations", 15, "iterations for connection phase for bsp algo")
+	minRoomSize := flag.Int("minroomsize", 5, "minimum room width/height")
+	maxRoomSize := flag.Int("maxroomsize", 10, "maximum room width/height")
+	connectionIterations := flag.Int(
+		"connectioniterations", 15, "iterations for connection phase for bsp algo")
+	lobbyEdgeType := flag.Int(
+		"lobbyedge", gmgmap.LOBBY_EDGE,
+		"lobby placement for interior algo; 0=edge, 1=interior, 2=any")
 	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "random seed")
 	flag.Parse()
 	// make map
@@ -41,6 +46,9 @@ func main() {
 	case "cell":
 		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct,
 			*r11, *r12, *reps1, *r21, *r22, *reps2)
+	case "interior":
+		m = gmgmap.NewInterior(
+			*width, *height, *minRoomSize, *maxRoomSize, *lobbyEdgeType)
 	case "rogue":
 		m = gmgmap.NewRogue(*width, *height, *gridWidth, *gridHeight,
 			*minRoomPct, *maxRoomPct)
