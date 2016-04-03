@@ -1,16 +1,8 @@
 package gmgmap
 
 import (
-	"errors"
 	"math/rand"
 )
-
-type bspRoom struct {
-	r              rect
-	parent         int
-	child1, child2 int
-	level          int
-}
 
 // NewBSP - generate a new dungeon, using BSP method
 func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *Map {
@@ -18,7 +10,7 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 
 	// Split the map for a number of iterations, choosing random axis and location
 	var areas []bspRoom
-	areas = append(areas, bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0})
+	areas = append(areas, bspRoomRoot(width, height))
 	for i := 0; i < len(areas); i++ {
 		if areas[i].level == iterations {
 			break
@@ -145,38 +137,6 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 	}
 
 	return m
-}
-
-func split(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, error) {
-	// If more than 3:2, split the long dimension, otherwise randomise
-	if room.r.w*3 > room.r.h*2 || (room.r.h*3 < room.r.w*2 && rand.Intn(2) == 0) {
-		// Split horizontally
-		r := room.r.w - minRoomSize*2
-		var x int
-		if r < 0 {
-			return bspRoom{}, bspRoom{}, errors.New("room too small")
-		} else if r == 0 {
-			x = minRoomSize
-		} else {
-			x = rand.Intn(r) + minRoomSize
-		}
-		return bspRoom{rect{room.r.x, room.r.y, x, room.r.h}, i, -1, -1, room.level + 1},
-			bspRoom{rect{room.r.x + x, room.r.y, room.r.w - x, room.r.h}, i, -1, -1, room.level + 1},
-			nil
-	}
-	// Split vertically
-	r := room.r.h - minRoomSize*2
-	var y int
-	if r < 0 {
-		return bspRoom{}, bspRoom{}, errors.New("room too small")
-	} else if r == 0 {
-		y = minRoomSize
-	} else {
-		y = rand.Intn(r) + minRoomSize
-	}
-	return bspRoom{rect{room.r.x, room.r.y, room.r.w, y}, i, -1, -1, room.level + 1},
-		bspRoom{rect{room.r.x, room.r.y + y, room.r.w, room.r.h - y}, i, -1, -1, room.level + 1},
-		nil
 }
 
 func getXRange(l Layer, r rect) (int, int) {
