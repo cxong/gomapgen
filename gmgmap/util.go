@@ -81,8 +81,8 @@ func bspRoomRoot(width, height int) bspRoom {
 }
 
 func split(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, error) {
-	// If more than 3:2, split the long dimension, otherwise randomise
-	if room.r.w*3 > room.r.h*2 || (room.r.h*3 < room.r.w*2 && rand.Intn(2) == 0) {
+	// If more than 2:1, split the long dimension, otherwise randomise
+	if room.r.w*2 > room.r.h || (room.r.h*2 < room.r.w && rand.Intn(2) == 0) {
 		// Split horizontally
 		r := room.r.w - minRoomSize*2
 		var x int

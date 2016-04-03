@@ -15,11 +15,9 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
   lobbyEdge int) *Map {
   m := NewMap(width, height)
 
-  // Surround the map with wall
   // We'll place the "road" tiles later
   g := m.Layer("Ground")
   s := m.Layer("Structures")
-  s.rectangleUnfilled(rect{0, 0, width, height}, wall)
 
   // Randomly partition the space using bsp
   // Keep splitting as long as we can
@@ -54,7 +52,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
       continue
     }
     r := rooms[i].r
-    s.rectangleUnfilled(r, wall)
+    s.rectangleUnfilled(r, wall2)
     groundRect := rect{r.x+1, r.y+1, r.w-2, r.h-2}
     g.rectangleFilled(groundRect, room)
   }
