@@ -19,13 +19,10 @@ func main() {
 	gridHeight := flag.Int("gridheight", 3, "grid size, for rogue algo")
 	minRoomPct := flag.Int("minroompct", 50, "percent of rooms per grid, for rogue algo")
 	maxRoomPct := flag.Int("maxroompct", 100, "percent of rooms per grid, for rogue algo")
-	fillPct := flag.Int("fillpct", 40, "initial fill percent, for cell algo")
-	r11 := flag.Int("r11", 5, "R1 cutoff rep 1, for cell algo")
-	r12 := flag.Int("r12", 2, "R2 cutoff rep 1, for cell algo")
-	reps1 := flag.Int("reps1", 4, "reps for rep 1, for cell algo")
-	r21 := flag.Int("r21", 5, "R1 cutoff rep 2, for cell algo")
-	r22 := flag.Int("r22", -1, "R2 cutoff rep 2, for cell algo")
-	reps2 := flag.Int("reps2", 3, "reps for rep 2, for cell algo")
+	fillPct := flag.Int("fillpct", 45, "initial fill percent, for cell algo")
+	r1 := flag.Int("r1", 5, "R1 cutoff, for cell algo")
+	r2 := flag.Int("r2", 0, "R2 cutoff, for cell algo")
+	reps := flag.Int("reps", 4, "reps, for cell algo")
 	splits := flag.Int("splits", 4, "number of splits for bsp algo")
 	minRoomSize := flag.Int("minroomsize", 5, "minimum room width/height")
 	maxRoomSize := flag.Int("maxroomsize", 10, "maximum room width/height")
@@ -44,8 +41,7 @@ func main() {
 	case "bsp":
 		m = gmgmap.NewBSP(*width, *height, *splits, *minRoomSize, *connectionIterations)
 	case "cell":
-		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct,
-			*r11, *r12, *reps1, *r21, *r22, *reps2)
+		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct, *reps, *r1, *r2)
 	case "interior":
 		m = gmgmap.NewInterior(
 			*width, *height, *minRoomSize, *maxRoomSize, *lobbyEdgeType)

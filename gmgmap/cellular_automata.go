@@ -3,12 +3,11 @@ package gmgmap
 import "math/rand"
 
 // NewCellularAutomata - create a stone-on-floor map using cellular automata
-// The algorithm has two phases, where for a number of repetitions:
-// If the number of tiles within one step (including itself) is at least r1, OR
-// the number of tiles within two steps is at most r2, turn into a stone, else
-// turn into a floor
-func NewCellularAutomata(width, height, fillPct,
-	r11, r12, repeat1, r21, r22, repeat2 int) *Map {
+// For a number of repetitions:
+// If the number of stones within one step (including itself) is at least r1 OR
+// the number of stones within 2 steps at most r2, turn into a stone,
+// else turn into a floor
+func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
 	m := NewMap(width, height)
 	m.Layer("Ground").fill(floor)
 	l := m.Layer("Structures")
@@ -16,16 +15,14 @@ func NewCellularAutomata(width, height, fillPct,
 	for i := 0; i < fillPct*width*height/100; i++ {
 		l.Tiles[i] = road
 	}
+	// Shuffle
 	for i := range l.Tiles {
 		j := rand.Intn(i + 1)
 		l.Tiles[i], l.Tiles[j] = l.Tiles[j], l.Tiles[i]
 	}
 	// Repetitions
-	for i := 0; i < repeat1; i++ {
-		rep(l, r11, r12)
-	}
-	for i := 0; i < repeat2; i++ {
-		rep(l, r21, r22)
+	for i := 0; i < repeat; i++ {
+		rep(l, r1, r2)
 	}
 	return m
 }
