@@ -101,7 +101,7 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 		if strings.ToLower(filepath.Ext(walkPath)) == ".tmx" {
 			return nil
 		}
-		fmt.Printf("Copying %s to %s\n", walkPath, destPath)
+		//fmt.Printf("Copying %s to %s\n", walkPath, destPath)
 		src, err := os.Open(walkPath)
 		if err != nil {
 			return err

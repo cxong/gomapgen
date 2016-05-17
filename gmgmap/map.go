@@ -274,6 +274,16 @@ func addCorridor(g, s *Layer, startX, startY, endX, endY, dx, dy int, tile rune)
 	var halfX, halfY int
 	if dx > 0 {
 		// horizontal
+		dx = 1
+		dy = 0
+		if startX > endX {
+			tmp := startX
+			startX = endX
+			endX = tmp
+			tmp = startY
+			startY = endY
+			endY = tmp
+		}
 		dxAlt, dyAlt = 0, 1
 		halfX, halfY = (endX-startX)/2+startX, endY+1
 		if endY < startY {
@@ -282,6 +292,16 @@ func addCorridor(g, s *Layer, startX, startY, endX, endY, dx, dy int, tile rune)
 		}
 	} else {
 		// vertical
+		dx = 0
+		dy = 1
+		if startY > endY {
+			tmp := startX
+			startX = endX
+			endX = tmp
+			tmp = startY
+			startY = endY
+			endY = tmp
+		}
 		dxAlt, dyAlt = 1, 0
 		halfX, halfY = endX+1, (endY-startY)/2+startY
 		if endX < startX {
@@ -292,7 +312,9 @@ func addCorridor(g, s *Layer, startX, startY, endX, endY, dx, dy int, tile rune)
 	set := func(x, y int) {
 		g.setTile(x, y, tile)
 		// Clear walls in the way
-		s.setTile(x, y, nothing)
+		if s != nil {
+			s.setTile(x, y, nothing)
+		}
 	}
 	// Initial direction
 	x, y := startX, startY
