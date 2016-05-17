@@ -78,6 +78,15 @@ func (m *Map) Layer(name string) *Layer {
 	return m.Layers[len(m.Layers)-1]
 }
 
+func (m *Map) removeLayer(name string) {
+	for i, l := range m.Layers {
+		if l.Name == name {
+			m.Layers = append(m.Layers[:i], m.Layers[i+1:]...)
+			return
+		}
+	}
+}
+
 func (l Layer) getTile(x, y int) rune {
 	return l.Tiles[x+y*l.Width]
 }
@@ -116,6 +125,43 @@ func (l *Layer) rectangleFilled(r rect, tile rune) {
 
 func (l *Layer) rectangleUnfilled(r rect, tile rune) {
 	l.rectangle(r, tile, false)
+}
+
+// Perform a flood fill starting from a location
+// Floods up, down, left and right
+func (l *Layer) floodFill(x, y int, tile rune) {
+	indices := []int{x + y*l.Width}
+	floodTile := l.Tiles[indices[0]]
+	l.Tiles[indices[0]] = tile
+	for i := 0; i < len(indices); i++ {
+		x = indices[i] % l.Width
+		y = indices[i] / l.Width
+		var index int
+		// top
+		index = (y-1)*l.Width + x
+		if y > 0 && l.Tiles[index] == floodTile {
+			indices = append(indices, index)
+			l.Tiles[index] = tile
+		}
+		// bottom
+		index = (y+1)*l.Width + x
+		if y < l.Height-1 && l.Tiles[index] == floodTile {
+			indices = append(indices, index)
+			l.Tiles[index] = tile
+		}
+		// left
+		index = y*l.Width + x - 1
+		if x > 0 && l.Tiles[index] == floodTile {
+			indices = append(indices, index)
+			l.Tiles[index] = tile
+		}
+		// right
+		index = y*l.Width + x + 1
+		if x < l.Width-1 && l.Tiles[index] == floodTile {
+			indices = append(indices, index)
+			l.Tiles[index] = tile
+		}
+	}
 }
 
 // Print - print map in ascii, with a border
@@ -160,6 +206,30 @@ func (m Map) Print() {
 			fmt.Print("+")
 		}
 
+		fmt.Println()
+	}
+}
+
+// PrintCSV - print raw rune values as CSV
+func (m Map) PrintCSV() {
+	for y := 0; y < m.Height; y++ {
+		for x := 0; x < m.Width; x++ {
+			// Print the top-most cell in the Layers
+			printed := false
+			for i := len(m.Layers) - 1; i >= 0; i-- {
+				l := m.Layers[i]
+				tile := l.getTile(x, y)
+				if i == 0 || tile != nothing {
+					fmt.Printf("%d", tile)
+					printed = true
+					break
+				}
+			}
+			if !printed {
+				fmt.Print(" ")
+			}
+			fmt.Print(",")
+		}
 		fmt.Println()
 	}
 }

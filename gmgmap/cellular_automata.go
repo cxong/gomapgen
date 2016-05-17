@@ -1,6 +1,9 @@
 package gmgmap
 
-import "math/rand"
+import (
+	"fmt"
+	"math/rand"
+)
 
 // NewCellularAutomata - create a stone-on-floor map using cellular automata
 // For a number of repetitions:
@@ -24,6 +27,27 @@ func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
 	for i := 0; i < repeat; i++ {
 		rep(l, r1, r2)
 	}
+
+	// Use flood fill to identify disconnected areas
+	fl := m.Layer("Flood")
+	fl.fill(0)
+	// First copy across the stone tiles
+	for i, tile := range l.Tiles {
+		if tile == road {
+			fl.Tiles[i] = road
+		}
+	}
+	// Then perform flood fill conditionally on the flood layer
+	index := rune(-1)
+	for i := range fl.Tiles {
+		if fl.Tiles[i] == 0 {
+			fl.floodFill(i%fl.Width, i/fl.Width, index)
+			index--
+		}
+	}
+	m.removeLayer(fl.Name)
+	fmt.Printf("Number of contiguous areas: %d\n", -index-1)
+
 	return m
 }
 

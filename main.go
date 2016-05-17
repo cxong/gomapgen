@@ -14,6 +14,7 @@ func main() {
 	template := flag.String("template", "dawnlike", "TMX export template: dawnlike/kenney")
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
+	export := flag.Bool("export", true, "enable TMX export")
 	iterations := flag.Int("iterations", 3000, "number of iterations for walk algo")
 	gridWidth := flag.Int("gridwidth", 3, "grid size, for rogue algo")
 	gridHeight := flag.Int("gridheight", 3, "grid size, for rogue algo")
@@ -55,15 +56,18 @@ func main() {
 	}
 	// print
 	m.Print()
+	//m.PrintCSV()
 	// export TMX
-	t := &gmgmap.DawnLikeTemplate
-	switch *template {
-	case "dawnlike":
-		t = &gmgmap.DawnLikeTemplate
-	case "kenney":
-		t = &gmgmap.KenneyTemplate
-	}
-	if err := m.ToTMX(t); err != nil {
-		panic(err)
+	if *export {
+		t := &gmgmap.DawnLikeTemplate
+		switch *template {
+		case "dawnlike":
+			t = &gmgmap.DawnLikeTemplate
+		case "kenney":
+			t = &gmgmap.KenneyTemplate
+		}
+		if err := m.ToTMX(t); err != nil {
+			panic(err)
+		}
 	}
 }
