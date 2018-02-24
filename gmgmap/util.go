@@ -9,6 +9,17 @@ type rect struct {
 	x, y, w, h int
 }
 
+func rectIsAdjacent(r1, r2 rect) bool {
+	// If left/right edges adjacent
+	if r1.x-(r2.x+r2.w) == 0 || r2.x-(r1.x+r1.w) == 0 {
+		return r1.y < r2.y+r2.h && r2.y < r1.y+r1.h
+	}
+	if r1.y-(r2.y+r2.h) == 0 || r2.y-(r1.y+r1.h) == 0 {
+		return r1.x < r2.x+r2.w && r2.x < r1.x+r1.w
+	}
+	return false
+}
+
 func randomWalk(x, y, w, h int) (int, int) {
 	for {
 		// Choose random direction, up/right/down/left
@@ -82,7 +93,7 @@ func bspRoomRoot(width, height int) bspRoom {
 
 func bspSplit(room *bspRoom, i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom, error) {
 	// If the room is too small, then don't split
-	if room.r.w - minRoomSize*2 < 0 && room.r.h - minRoomSize < 0 {
+	if room.r.w-minRoomSize*2 < 0 && room.r.h-minRoomSize < 0 {
 		return bspRoom{}, bspRoom{}, errors.New("room too small")
 	}
 	// If the room is small enough already, consider not splitting
