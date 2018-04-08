@@ -1,7 +1,6 @@
 package gmgmap
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -150,8 +149,8 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 			maxOverlapY := imax(room.r.y, roomOther.r.y)
 			overlapX := (minOverlapX + maxOverlapX) / 2
 			overlapY := (minOverlapY + maxOverlapY) / 2
+			g.setTile(overlapX, overlapY, room2)
 			s.setTile(overlapX, overlapY, door)
-			fmt.Println("placing door at", overlapX, overlapY)
 			break
 		}
 	}
