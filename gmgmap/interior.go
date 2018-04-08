@@ -1,6 +1,7 @@
 package gmgmap
 
 import (
+	"fmt"
 	"math/rand"
 )
 
@@ -95,6 +96,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 
 	// Mark all the rooms according to their distance from the lobby (depth)
 	// Re-use the level parameter
+	overlapSize := 1
 	for i := 0; i < len(rooms); i++ {
 		room := rooms[i]
 		room.level = -1
@@ -115,7 +117,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 					continue
 				}
 				rOther := rect{roomOther.r.x, roomOther.r.y, roomOther.r.w - 1, roomOther.r.h - 1}
-				if rectIsAdjacent(r, rOther) {
+				if rectIsAdjacent(r, rOther, overlapSize) {
 					room.level = level
 					rooms[i] = room
 					hasMoreRooms = true
@@ -123,10 +125,34 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 			}
 		}
 	}
+
+	// For every room, connect it to a random room with lower depth
 	for i := 0; i < len(rooms); i++ {
 		room := rooms[i]
-		groundRect := rect{room.r.x + 1, room.r.y + 1, room.r.w - 2, room.r.h - 2}
-		g.rectangleFilled(groundRect, rune('0'+room.level))
+		r := rect{room.r.x, room.r.y, room.r.w - 1, room.r.h - 1}
+		for j := 0; j < len(rooms); j++ {
+			roomOther := rooms[j]
+			if roomOther.level != room.level-1 {
+				continue
+			}
+			rOther := rect{roomOther.r.x, roomOther.r.y, roomOther.r.w - 1, roomOther.r.h - 1}
+			if !rectIsAdjacent(r, rOther, overlapSize) {
+				continue
+			}
+			// Rooms are adjacent; pick the cell that's in the middle of the
+			// adjacent area and turn into a door
+			minOverlapX := imin(
+				room.r.x+room.r.w, roomOther.r.x+roomOther.r.w)
+			maxOverlapX := imax(room.r.x, roomOther.r.x)
+			minOverlapY := imin(
+				room.r.y+room.r.h, roomOther.r.y+roomOther.r.h)
+			maxOverlapY := imax(room.r.y, roomOther.r.y)
+			overlapX := (minOverlapX + maxOverlapX) / 2
+			overlapY := (minOverlapY + maxOverlapY) / 2
+			s.setTile(overlapX, overlapY, door)
+			fmt.Println("placing door at", overlapX, overlapY)
+			break
+		}
 	}
 
 	return m

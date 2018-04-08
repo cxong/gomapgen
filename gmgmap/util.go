@@ -9,13 +9,13 @@ type rect struct {
 	x, y, w, h int
 }
 
-func rectIsAdjacent(r1, r2 rect) bool {
+func rectIsAdjacent(r1, r2 rect, overlapSize int) bool {
 	// If left/right edges adjacent
 	if r1.x-(r2.x+r2.w) == 0 || r2.x-(r1.x+r1.w) == 0 {
-		return r1.y < r2.y+r2.h && r2.y < r1.y+r1.h
+		return r1.y+overlapSize < r2.y+r2.h && r2.y+overlapSize < r1.y+r1.h
 	}
 	if r1.y-(r2.y+r2.h) == 0 || r2.y-(r1.y+r1.h) == 0 {
-		return r1.x < r2.x+r2.w && r2.x < r1.x+r1.w
+		return r1.x+overlapSize < r2.x+r2.w && r2.x+overlapSize < r1.x+r1.w
 	}
 	return false
 }
