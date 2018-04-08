@@ -12,8 +12,9 @@ const (
 )
 
 // NewInterior - create a building interior layout map.
-// The layout has a "lobby", multiple rooms and corridors.
-// The lobby must be at most 2 steps from any room.
+// The layout has a "lobby", multiple rooms that all connect to the lobby.
+// Idea taken from http://www.redactedgame.com/?p=106
+// TODO: improve connectedness of leaf nodes, to make it less tree-like
 func NewInterior(width, height, minRoomSize, maxRoomSize,
 	lobbyEdge int) *Map {
 	m := NewMap(width, height)
