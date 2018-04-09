@@ -58,11 +58,11 @@ See `main.go` for all the options.
 
 ## --algo=walk --width=16 --height=16 --iterations=500
 
-![interior](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/interior.png)
+![walk](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/walk.png)
 
 ## --algo=interior --minroomsize=4 --maxroomsize=8 --width=24 --height=24
 
-![walk](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/walk.png)
+![interior](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/interior.png)
 
 ## --algo=cell --width=24 --height=20 --template=kenney
 
