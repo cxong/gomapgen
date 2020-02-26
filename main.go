@@ -53,6 +53,8 @@ func main() {
 		m = gmgmap.NewShop(*width, *height)
 	case "walk":
 		m = gmgmap.NewRandomWalk(*width, *height, *iterations)
+	case "village":
+		m = gmgmap.NewVillage(*width, *height)
 	}
 	// print
 	m.Print()
