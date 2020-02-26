@@ -32,6 +32,8 @@ func main() {
 	lobbyEdgeType := flag.Int(
 		"lobbyedge", gmgmap.LOBBY_EDGE,
 		"lobby placement for interior algo; 0=edge, 1=interior, 2=any")
+	buildingPadding := flag.Int(
+		"buildingPadding", 1, "padding between village buildings")
 	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "random seed")
 	flag.Parse()
 	// make map
@@ -54,7 +56,7 @@ func main() {
 	case "walk":
 		m = gmgmap.NewRandomWalk(*width, *height, *iterations)
 	case "village":
-		m = gmgmap.NewVillage(*width, *height)
+		m = gmgmap.NewVillage(*width, *height, *buildingPadding)
 	}
 	// print
 	m.Print()

@@ -20,6 +20,11 @@ func rectIsAdjacent(r1, r2 rect, overlapSize int) bool {
 	return false
 }
 
+func rectOverlaps(r1, r2 rect) bool {
+	return r1.x < r2.x+r2.w && r1.x+r1.w > r2.x &&
+		r1.y < r2.y+r2.h && r1.y+r1.h > r2.y
+}
+
 func randomWalk(x, y, w, h int) (int, int) {
 	for {
 		// Choose random direction, up/right/down/left
