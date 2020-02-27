@@ -135,3 +135,14 @@ func bspSplit(room *bspRoom, i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom,
 		bspRoom{rect{room.r.x, room.r.y + y, room.r.w, room.r.h - y}, i, -1, -1, room.level + 1},
 		nil
 }
+
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func manhattanDistance(x1, y1, x2, y2 int) int {
+	return Abs(x1-x2) + Abs(y1-y2)
+}

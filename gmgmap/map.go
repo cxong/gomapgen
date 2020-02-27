@@ -1,6 +1,10 @@
 package gmgmap
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/beefsack/go-astar"
+)
 
 // Layer - a rectangular collection of tiles
 type Layer struct {
@@ -88,6 +92,9 @@ func (m *Map) removeLayer(name string) {
 }
 
 func (l Layer) getTile(x, y int) rune {
+	if x < 0 || x >= l.Width || y < 0 || y >= l.Height {
+		return rune(0)
+	}
 	return l.Tiles[x+y*l.Width]
 }
 
@@ -343,4 +350,76 @@ func addCorridor(g, s *Layer, startX, startY, endX, endY int, tile rune) {
 		set(x, y)
 	}
 	set(endX, endY)
+}
+
+type Tile struct {
+	x, y int
+	s    *Layer
+	w    World
+}
+
+func (t *Tile) PathNeighbors() []astar.Pather {
+	neighbors := []astar.Pather{}
+	for _, offset := range [][]int{
+		{-1, 0},
+		{1, 0},
+		{0, -1},
+		{0, 1},
+	} {
+		if n := t.s.getTile(t.x+offset[0], t.y+offset[1]); n == nothing {
+			neighbors = append(neighbors, t.w.tile(t.x+offset[0], t.y+offset[1]))
+		}
+	}
+	return neighbors
+}
+
+func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
+	return 1
+}
+
+func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
+	toT := to.(*Tile)
+	return float64(manhattanDistance(t.x, t.y, toT.x, toT.y))
+}
+
+type World map[int]map[int]*Tile
+
+func (w World) tile(x, y int) *Tile {
+	if w[x] == nil {
+		return nil
+	}
+	return w[x][y]
+}
+
+func (w World) setTile(t *Tile, x, y int) {
+	if w[x] == nil {
+		w[x] = map[int]*Tile{}
+	}
+	w[x][y] = t
+	t.x = x
+	t.y = y
+	t.w = w
+}
+
+// Use A* to find and draw a path between two points
+// A* will avoid any tiles where there's something in the structure (s) layer
+func addPath(g, s *Layer, x1, y1, x2, y2 int, tile rune) {
+	w := World{}
+	for x := 0; x < g.Width; x++ {
+		for y := 0; y < g.Height; y++ {
+			w.setTile(&Tile{x, y, s, w}, x, y)
+		}
+	}
+	path, _, found := astar.Path(w.tile(x1, y1), w.tile(x2, y2))
+	if !found {
+		fmt.Println("Could not find path")
+	} else {
+		for _, t := range path {
+			g.setTile(t.(*Tile).x, t.(*Tile).y, tile)
+			// Clear walls in the way
+			if s != nil {
+				s.setTile(t.(*Tile).x, t.(*Tile).y, nothing)
+			}
+		}
+	}
 }

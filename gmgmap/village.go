@@ -70,10 +70,11 @@ func NewVillage(width, height, buildingPadding int) *Map {
 			b1 := buildings[building1]
 			b2 := buildings[building2]
 			startX := b1.x + b1.w/2
-			startY := b1.y + b1.h - 1
+			startY := b1.y + b1.h
 			endX := b2.x + b2.w/2
-			endY := b2.y + b2.h - 1
-			addCorridor(g, s, startX, startY, endX, endY, road)
+			endY := b2.y + b2.h
+			addPath(g, s, startX, startY, endX, endY, road)
+			//addCorridor(g, s, startX, startY, endX, endY, road)
 			break
 		}
 	}
