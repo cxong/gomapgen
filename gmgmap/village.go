@@ -7,6 +7,7 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	m := NewMap(width, height)
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
+	f := m.Layer("Furniture")
 
 	// Grass
 	g.fill(grass)
@@ -40,16 +41,22 @@ func NewVillage(width, height, buildingPadding int) *Map {
 		if overlaps {
 			continue
 		}
-		addBuilding(g, s, x, y, w, h)
+		addBuilding(g, s, f, x, y, w, h)
 		buildings = append(buildings, rect{x, y, w, h})
 	}
 
 	return m
 }
 
-func addBuilding(g, s *Layer, x, y, w, h int) {
+func addBuilding(g, s, f *Layer, x, y, w, h int) {
 	// Perimeter
 	s.rectangle(rect{x, y, w, h}, wall, false)
 	// Floor
 	g.rectangle(rect{x + 1, y + 1, w - 2, h - 2}, room, true)
+	// Entrance
+	entranceX := x + w/2
+	entranceY := y + h - 1
+	g.setTile(entranceX, entranceY, room)
+	s.setTile(entranceX, entranceY, door)
+	f.setTile(entranceX-1, entranceY, sign)
 }
