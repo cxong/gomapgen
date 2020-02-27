@@ -68,5 +68,12 @@ See `main.go` for all the options.
 
 ![cell](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/cell.png)
 
+# Developer Getting Started
 
-
+1. [Install go](https://golang.org)
+2. `go get github.com/cxong/gomapgen`
+3. Go to the source location, run `go run main.go`
+4. This should create a folder named `tmx_export/`
+5. [Install Tiled](https://www.mapeditor.org)
+6. Open `tmx_export/map.tmx` in Tiled
+7. Look at the generated map!
