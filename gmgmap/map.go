@@ -269,7 +269,20 @@ func IsWall(tile rune) bool {
 
 // Add a corridor with two turns
 // This can connect any two points; the S-shaped turn occurs at the middle
-func addCorridor(g, s *Layer, startX, startY, endX, endY, dx, dy int, tile rune) {
+func addCorridor(g, s *Layer, startX, startY, endX, endY int, tile rune) {
+	deltax := startX - endX
+	if deltax < 0 {
+		deltax = -deltax
+	}
+	deltay := startY - endY
+	if deltay < 0 {
+		deltay = -deltay
+	}
+	dx := 0
+	if deltax > deltay {
+		dx = 1
+	}
+	dy := 1 - dx
 	var dxAlt, dyAlt int
 	var halfX, halfY int
 	if dx > 0 {

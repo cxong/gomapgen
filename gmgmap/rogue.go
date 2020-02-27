@@ -178,13 +178,13 @@ func NewRogue(width, height,
 			// Connect with neighbour on right
 			neighbour := rooms[i+1]
 			addCorridor(g, s, roomRect.x+roomRect.w-1, roomRect.y+roomRect.h/2,
-				neighbour.x, neighbour.y+neighbour.h/2, 1, 0, room2)
+				neighbour.x, neighbour.y+neighbour.h/2, room2)
 		}
 		if connections.down && y < gridHeight-1 {
 			// Connect with neighbour below
 			neighbour := rooms[i+gridWidth]
 			addCorridor(g, s, roomRect.x+roomRect.w/2, roomRect.y+roomRect.h-1,
-				neighbour.x+neighbour.w/2, neighbour.y, 0, 1, room2)
+				neighbour.x+neighbour.w/2, neighbour.y, room2)
 		}
 	}
 

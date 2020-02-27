@@ -69,20 +69,7 @@ func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
 		y1 := int(areaStarts[i]) / l.Width
 		x2 := int(areaStarts[i+1]) % l.Width
 		y2 := int(areaStarts[i+1]) / l.Width
-		deltax := x1 - x2
-		if deltax < 0 {
-			deltax = -deltax
-		}
-		deltay := y1 - y2
-		if deltay < 0 {
-			deltay = -deltay
-		}
-		dx := 0
-		if deltax > deltay {
-			dx = 1
-		}
-		dy := 1 - dx
-		addCorridor(g, l, x1, y1, x2, y2, dx, dy, floor)
+		addCorridor(g, l, x1, y1, x2, y2, floor)
 	}
 
 	return m
