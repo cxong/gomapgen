@@ -5,13 +5,13 @@ import "math/rand"
 // NewVillage - create a village, made up of multiple buildings
 func NewVillage(width, height, buildingPadding int) *Map {
 	m := NewMap(width, height)
+	g := m.Layer("Ground")
+	s := m.Layer("Structures")
 
 	// Grass
-	g := m.Layer("Ground")
 	g.fill(grass)
 
 	// Buildings
-	s := m.Layer("Structures")
 	buildings := make([]rect, 0)
 	// Keep placing buildings for a while
 	for i := 0; i < 500; i++ {
@@ -40,14 +40,16 @@ func NewVillage(width, height, buildingPadding int) *Map {
 		if overlaps {
 			continue
 		}
-		addBuilding(s, x, y, w, h)
+		addBuilding(g, s, x, y, w, h)
 		buildings = append(buildings, rect{x, y, w, h})
 	}
 
 	return m
 }
 
-func addBuilding(s *Layer, x, y, w, h int) {
+func addBuilding(g, s *Layer, x, y, w, h int) {
 	// Perimeter
 	s.rectangle(rect{x, y, w, h}, wall, false)
+	// Floor
+	g.rectangle(rect{x + 1, y + 1, w - 2, h - 2}, room, true)
 }
