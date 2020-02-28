@@ -401,25 +401,14 @@ func (w World) setTile(t *Tile, x, y int) {
 	t.w = w
 }
 
-// Use A* to find and draw a path between two points
+// Use A* to find and return a path between two points
 // A* will avoid any tiles where there's something in the structure (s) layer
-func addPath(g, s *Layer, x1, y1, x2, y2 int, tile rune) {
+func addPath(g, s *Layer, x1, y1, x2, y2 int) (path []astar.Pather, distance float64, found bool) {
 	w := World{}
 	for x := 0; x < g.Width; x++ {
 		for y := 0; y < g.Height; y++ {
 			w.setTile(&Tile{x, y, s, w}, x, y)
 		}
 	}
-	path, _, found := astar.Path(w.tile(x1, y1), w.tile(x2, y2))
-	if !found {
-		fmt.Println("Could not find path")
-	} else {
-		for _, t := range path {
-			g.setTile(t.(*Tile).x, t.(*Tile).y, tile)
-			// Clear walls in the way
-			if s != nil {
-				s.setTile(t.(*Tile).x, t.(*Tile).y, nothing)
-			}
-		}
-	}
+	return astar.Path(w.tile(x1, y1), w.tile(x2, y2))
 }
