@@ -30,6 +30,11 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	s := m.Layer("Structures")
 	f := m.Layer("Furniture")
 	c := m.Layer("Characters")
+	// Store usage of paths as weights
+	pathUsage := make([][]int, height)
+	for i := range pathUsage {
+		pathUsage[i] = make([]int, width)
+	}
 
 	// Grass
 	g.fill(grass)
@@ -79,11 +84,10 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	}
 
 	// Draw paths between random pairs of entrances via importance
-	type Pair struct {
-		a, b int
-	}
-	paths := map[Pair]bool{}
-	for i := 0; i < len(buildings)-1; i++ {
+	// Ensure at least one path exists for all buildings
+	buildingsWithPaths := map[int]bool{}
+	numPaths := len(buildings) * 3
+	for i := 0; i < numPaths || len(buildingsWithPaths) < len(buildings); i++ {
 		for {
 			// Check for path valid and exists
 			building1 := rand.Intn(len(buildings))
@@ -91,24 +95,18 @@ func NewVillage(width, height, buildingPadding int) *Map {
 			impFact := rand.Intn(impSum)
 			building2 := 0
 			impFactSum := 0
-			for i, b2 := range buildings {
+			for j, b2 := range buildings {
 				impFactSum += b2.importance
 				if impFactSum > impFact {
-					building2 = i
+					building2 = j
 					break
 				}
 			}
 			if building1 == building2 {
 				continue
 			}
-			if building1 > building2 {
-				building2, building1 = building1, building2
-			}
-			key := Pair{building1, building2}
-			if _, ok := paths[key]; ok {
-				continue
-			}
-			paths[key] = true
+			buildingsWithPaths[building1] = true
+			buildingsWithPaths[building2] = true
 			// TODO: find entrance and start/end paths there
 			b1 := buildings[building1]
 			b2 := buildings[building2]
@@ -121,14 +119,23 @@ func NewVillage(width, height, buildingPadding int) *Map {
 				fmt.Println("Could not find path")
 			} else {
 				for _, t := range path {
-					g.setTile(t.(*Tile).x, t.(*Tile).y, road)
-					// Clear walls in the way
-					if s != nil {
-						s.setTile(t.(*Tile).x, t.(*Tile).y, nothing)
-					}
+					pathUsage[t.(*Tile).y][t.(*Tile).x]++
 				}
 			}
 			break
+		}
+	}
+
+	// Draw paths based on how well they're used
+	for y := range pathUsage {
+		for x, usage := range pathUsage[y] {
+			if usage == 0 {
+				if g.getTile(x, y) == grass && s.getTile(x, y) == nothing {
+					s.setTile(x, y, tree)
+				}
+			} else if usage > 3 {
+				g.setTile(x, y, road)
+			}
 		}
 	}
 
