@@ -133,8 +133,12 @@ func NewVillage(width, height, buildingPadding int) *Map {
 				if g.getTile(x, y) == grass && s.getTile(x, y) == nothing {
 					s.setTile(x, y, tree)
 				}
-			} else if usage > 3 {
+			} else if usage <= 3 {
+				// Leave as grass
+			} else if usage <= 6 {
 				g.setTile(x, y, road)
+			} else {
+				g.setTile(x, y, road2)
 			}
 		}
 	}

@@ -27,6 +27,7 @@ const (
 	floor      = 'f'
 	floor2     = 'F'
 	road       = 'r'
+	road2      = 'R'
 	wall       = 'w'
 	wall2      = 'W'
 	room       = '.'

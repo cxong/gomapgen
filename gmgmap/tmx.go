@@ -33,6 +33,7 @@ type TMXTemplate struct {
 	floorIDs [16]string
 	//floor2IDs  [16]string
 	roadIDs    [16]string
+	road2IDs   [16]string
 	wallIDs    [16]string
 	wall2IDs   [16]string
 	roomIDs    [16]string
@@ -164,6 +165,8 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 				//tileIDs = &tmp.floor2IDs
 				case road:
 					tileIDs = &tmp.roadIDs
+				case road2:
+					tileIDs = &tmp.road2IDs
 				case wall:
 					tileIDs = &tmp.wallIDs
 				case wall2:
