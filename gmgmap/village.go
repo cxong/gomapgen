@@ -68,19 +68,23 @@ func NewVillage(width, height, buildingPadding int) *Map {
 		if overlaps {
 			continue
 		}
-		addBuilding(g, s, f, x, y, w, h)
 		buildings = append(buildings, Building{rect{x, y, w, h}, 0})
 	}
 
 	// Randomly assign importance to buildings
 	impSum := 0
-	for _, building := range buildings {
-		building.importance = int(math.Pow(float64(rand.Intn(3)+1), 2))
-		impSum += building.importance
-		// Place NPCs based on importance
-		for i := 0; i < building.importance; i++ {
-			building.addNPC(c)
+	for i, building := range buildings {
+		imp := int(math.Pow(float64(rand.Float32()*3.0+1), 2))
+		buildings[i].importance = imp
+		impSum += imp
+
+		// Use tiles based on importance
+		tileRoom, tileWall := room, wall
+		if imp > 10 {
+			tileRoom, tileWall = room2, wall2
 		}
+		hasSign := imp > 5
+		addBuilding(g, s, f, building.r, tileRoom, tileWall, hasSign)
 	}
 
 	// Draw paths between random pairs of entrances via importance
@@ -143,18 +147,27 @@ func NewVillage(width, height, buildingPadding int) *Map {
 		}
 	}
 
+	// Place NPCs based on importance
+	for _, building := range buildings {
+		for i := 0; i < building.importance/2; i++ {
+			building.addNPC(c)
+		}
+	}
+
 	return m
 }
 
-func addBuilding(g, s, f *Layer, x, y, w, h int) {
+func addBuilding(g, s, f *Layer, r rect, tileRoom, tileWall rune, hasSign bool) {
 	// Perimeter
-	s.rectangle(rect{x, y, w, h}, wall, false)
+	s.rectangle(r, tileWall, false)
 	// Floor
-	g.rectangle(rect{x + 1, y + 1, w - 2, h - 2}, room, true)
+	g.rectangle(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, tileRoom, true)
 	// Entrance
-	entranceX := x + w/2
-	entranceY := y + h - 1
-	g.setTile(entranceX, entranceY, room)
+	entranceX := r.x + r.w/2
+	entranceY := r.y + r.h - 1
+	g.setTile(entranceX, entranceY, tileRoom)
 	s.setTile(entranceX, entranceY, door)
-	f.setTile(entranceX-1, entranceY, sign)
+	if hasSign {
+		f.setTile(entranceX-1, entranceY, sign)
+	}
 }
