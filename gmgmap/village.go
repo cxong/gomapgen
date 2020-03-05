@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+
+	"github.com/beefsack/go-astar"
 )
 
 type Building struct {
@@ -30,11 +32,7 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	s := m.Layer("Structures")
 	f := m.Layer("Furniture")
 	c := m.Layer("Characters")
-	// Store usage of paths as weights
-	pathUsage := make([][]int, height)
-	for i := range pathUsage {
-		pathUsage[i] = make([]int, width)
-	}
+	world := NewVillageWorld(width, height, s)
 
 	// Grass
 	g.fill(grass)
@@ -118,12 +116,12 @@ func NewVillage(width, height, buildingPadding int) *Map {
 			startY := b1.r.y + b1.r.h
 			endX := b2.r.x + b2.r.w/2
 			endY := b2.r.y + b2.r.h
-			path, _, found := addPath(g, s, startX, startY, endX, endY)
+			path, _, found := world.addPath(startX, startY, endX, endY)
 			if !found {
 				fmt.Println("Could not find path")
 			} else {
 				for _, t := range path {
-					pathUsage[t.(*Tile).y][t.(*Tile).x]++
+					world.incUsage(t.(*VillageTile).x, t.(*VillageTile).y)
 				}
 			}
 			break
@@ -131,8 +129,9 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	}
 
 	// Draw paths based on how well they're used
-	for y := range pathUsage {
-		for x, usage := range pathUsage[y] {
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			usage := world.getUsage(x, y)
 			if usage == 0 {
 				if g.getTile(x, y) == grass && s.getTile(x, y) == nothing {
 					s.setTile(x, y, tree)
@@ -170,4 +169,83 @@ func addBuilding(g, s, f *Layer, r rect, tileRoom, tileWall rune, hasSign bool) 
 	if hasSign {
 		f.setTile(entranceX-1, entranceY, sign)
 	}
+}
+
+// Special tile types for A* to find paths via erosion
+type VillageTile struct {
+	x, y  int
+	s     *Layer
+	w     VillageWorld
+	usage int
+}
+
+func (t *VillageTile) PathNeighbors() []astar.Pather {
+	neighbors := []astar.Pather{}
+	for _, offset := range [][]int{
+		{-1, 0},
+		{1, 0},
+		{0, -1},
+		{0, 1},
+	} {
+		if n := t.s.getTile(t.x+offset[0], t.y+offset[1]); n == nothing {
+			neighbors = append(neighbors, t.w.tile(t.x+offset[0], t.y+offset[1]))
+		}
+	}
+	return neighbors
+}
+
+func (t *VillageTile) PathNeighborCost(to astar.Pather) float64 {
+	//toT := to.(*VillageTile)
+	// Max cost 1.5, min cost 1 (asymptote)
+	//return 0.5/float64(toT.usage+1) + 1
+	return 1
+}
+
+func (t *VillageTile) PathEstimatedCost(to astar.Pather) float64 {
+	toT := to.(*VillageTile)
+	return float64(manhattanDistance(t.x, t.y, toT.x, toT.y))
+}
+
+type VillageWorld map[int]map[int]*VillageTile
+
+func NewVillageWorld(w, h int, s *Layer) VillageWorld {
+	world := VillageWorld{}
+	for x := 0; x < w; x++ {
+		for y := 0; y < h; y++ {
+			world.setTile(&VillageTile{x, y, s, world, 0}, x, y)
+		}
+	}
+	return world
+}
+
+func (w VillageWorld) tile(x, y int) *VillageTile {
+	if w[x] == nil {
+		return nil
+	}
+	return w[x][y]
+}
+
+func (w VillageWorld) setTile(t *VillageTile, x, y int) {
+	if w[x] == nil {
+		w[x] = map[int]*VillageTile{}
+	}
+	w[x][y] = t
+	t.x = x
+	t.y = y
+	t.w = w
+	t.usage = 0
+}
+
+func (w VillageWorld) incUsage(x, y int) {
+	w[x][y].usage++
+}
+
+func (w VillageWorld) getUsage(x, y int) int {
+	return w[x][y].usage
+}
+
+// Use A* to find and return a path between two points
+// A* will avoid any tiles where there's something in the structure (s) layer
+func (w VillageWorld) addPath(x1, y1, x2, y2 int) (path []astar.Pather, distance float64, found bool) {
+	return astar.Path(w.tile(x1, y1), w.tile(x2, y2))
 }
