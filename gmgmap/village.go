@@ -195,10 +195,9 @@ func (t *VillageTile) PathNeighbors() []astar.Pather {
 }
 
 func (t *VillageTile) PathNeighborCost(to astar.Pather) float64 {
-	//toT := to.(*VillageTile)
+	toT := to.(*VillageTile)
 	// Max cost 1.5, min cost 1 (asymptote)
-	//return 0.5/float64(toT.usage+1) + 1
-	return 1
+	return 0.5/float64(toT.usage+1) + 1
 }
 
 func (t *VillageTile) PathEstimatedCost(to astar.Pather) float64 {
