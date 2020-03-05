@@ -52,6 +52,7 @@ const (
 	pot        = '('
 	assistant  = 'a'
 	player     = '@'
+	flower     = 'v'
 )
 
 // NewMap - create a new Map for a certain size

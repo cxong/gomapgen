@@ -68,6 +68,7 @@ type TMXTemplate struct {
 	potIDs        []string
 	assistantIDs  []string
 	playerIDs     []string
+	flowerIDs     []string
 
 	// Parameters used for template export
 	Width  int
@@ -246,6 +247,8 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 					xt[x+y*l.Width] = tmp.assistantIDs[rand.Intn(len(tmp.assistantIDs))]
 				case player:
 					xt[x+y*l.Width] = tmp.playerIDs[rand.Intn(len(tmp.playerIDs))]
+				case flower:
+					xt[x+y*l.Width] = tmp.flowerIDs[rand.Intn(len(tmp.flowerIDs))]
 				default:
 					fmt.Println("Unhandled tile", tile)
 					panic(tile)
