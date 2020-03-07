@@ -48,6 +48,10 @@ See `main.go` for all the options.
 
 ![rogue](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/rogue.png)
 
+## --algo=village
+
+![village](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/village.png)
+
 ## --algo=shop --width=16 --height=13
 
 ![shop](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/shop.png)
