@@ -202,7 +202,7 @@ func (t *VillageTile) PathNeighborCost(to astar.Pather) float64 {
 
 func (t *VillageTile) PathEstimatedCost(to astar.Pather) float64 {
 	toT := to.(*VillageTile)
-	return float64(manhattanDistance(t.x, t.y, toT.x, toT.y))
+	return euclideanDistance(t.x, t.y, toT.x, toT.y)
 }
 
 type VillageWorld map[int]map[int]*VillageTile

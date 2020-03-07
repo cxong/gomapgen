@@ -2,6 +2,7 @@ package gmgmap
 
 import (
 	"errors"
+	"math"
 	"math/rand"
 )
 
@@ -145,4 +146,8 @@ func Abs(x int) int {
 
 func manhattanDistance(x1, y1, x2, y2 int) int {
 	return Abs(x1-x2) + Abs(y1-y2)
+}
+
+func euclideanDistance(x1, y1, x2, y2 int) float64 {
+	return math.Sqrt(math.Pow(float64(x1-x2), 2) + math.Pow(float64(y1-y2), 2))
 }
