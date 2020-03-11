@@ -31,13 +31,21 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
 	f := m.Layer("Furniture")
-	c := m.Layer("Characters")
-	world := NewVillageWorld(width, height, s)
 
 	// Grass
 	g.fill(grass)
 
-	// Buildings
+	buildings := genBuildings(width, height, buildingPadding)
+	assignBuildingImportance(buildings)
+	placeBuildings(g, s, f, buildings)
+	addPaths(g, s, buildings)
+	c := m.Layer("Characters")
+	placeNPCs(c, buildings)
+
+	return m
+}
+
+func genBuildings(width, height, buildingPadding int) []Building {
 	buildings := make([]Building, 0)
 	// Keep placing buildings for a while
 	for i := 0; i < 500; i++ {
@@ -68,14 +76,19 @@ func NewVillage(width, height, buildingPadding int) *Map {
 		}
 		buildings = append(buildings, Building{rect{x, y, w, h}, 0})
 	}
+	return buildings
+}
 
-	// Randomly assign importance to buildings
-	impSum := 0
-	for i, building := range buildings {
+func assignBuildingImportance(buildings []Building) {
+	for i := range buildings {
 		imp := int(math.Pow(float64(rand.Float32()*3.0+1), 2))
 		buildings[i].importance = imp
-		impSum += imp
+	}
+}
 
+func placeBuildings(g, s, f *Layer, buildings []Building) {
+	for _, building := range buildings {
+		imp := building.importance
 		// Use tiles based on importance
 		tileRoom, tileWall := room, wall
 		if imp > 10 {
@@ -84,9 +97,18 @@ func NewVillage(width, height, buildingPadding int) *Map {
 		hasSign := imp > 5
 		addBuilding(g, s, f, building.r, tileRoom, tileWall, hasSign)
 	}
+}
 
+func addPaths(g, s *Layer, buildings []Building) {
 	// Draw paths between random pairs of entrances via importance
 	// Ensure at least one path exists for all buildings
+
+	impSum := 0
+	for _, building := range buildings {
+		impSum += building.importance
+	}
+
+	world := NewVillageWorld(g.Width, g.Height, s)
 	buildingsWithPaths := map[int]bool{}
 	numPaths := len(buildings) * 3
 	for i := 0; i < numPaths || len(buildingsWithPaths) < len(buildings); i++ {
@@ -128,32 +150,36 @@ func NewVillage(width, height, buildingPadding int) *Map {
 		}
 	}
 
+	placePaths(g, s, world, tree, grass, road, road2)
+}
+
+func placePaths(g, s *Layer, world VillageWorld, usage0, usage1, usage2, usage3 rune) {
 	// Draw paths based on how well they're used
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := 0; y < g.Height; y++ {
+		for x := 0; x < g.Width; x++ {
 			usage := world.getUsage(x, y)
 			if usage == 0 {
 				if g.getTile(x, y) == grass && s.getTile(x, y) == nothing {
-					s.setTile(x, y, tree)
+					s.setTile(x, y, usage0)
 				}
 			} else if usage <= 3 {
-				// Leave as grass
+				g.setTile(x, y, usage1)
 			} else if usage <= 6 {
-				g.setTile(x, y, road)
+				g.setTile(x, y, usage2)
 			} else {
-				g.setTile(x, y, road2)
+				g.setTile(x, y, usage3)
 			}
 		}
 	}
+}
 
+func placeNPCs(c *Layer, buildings []Building) {
 	// Place NPCs based on importance
 	for _, building := range buildings {
 		for i := 0; i < building.importance/2; i++ {
 			building.addNPC(c)
 		}
 	}
-
-	return m
 }
 
 func addBuilding(g, s, f *Layer, r rect, tileRoom, tileWall rune, hasSign bool) {
