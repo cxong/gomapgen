@@ -2,19 +2,25 @@ package gmgmap
 
 import "math/rand"
 
+const (
+	floorTile = floor
+	roadTile  = road2
+)
+
 // NewCellularAutomata - create a stone-on-floor map using cellular automata
 // For a number of repetitions:
 // If the number of stones within one step (including itself) is at least r1 OR
 // the number of stones within 2 steps at most r2, turn into a stone,
 // else turn into a floor
 func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
+
 	m := NewMap(width, height)
 	g := m.Layer("Ground")
-	g.fill(floor)
+	g.fill(floorTile)
 	l := m.Layer("Structures")
 	// Randomly set a percentage of the tiles as stones
 	for i := 0; i < fillPct*width*height/100; i++ {
-		l.Tiles[i] = road
+		l.Tiles[i] = roadTile
 	}
 	// Shuffle
 	for i := range l.Tiles {
@@ -31,8 +37,8 @@ func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
 	fl.fill(0)
 	// First copy across the stone tiles
 	for i, tile := range l.Tiles {
-		if tile == road {
-			fl.Tiles[i] = road
+		if tile == roadTile {
+			fl.Tiles[i] = roadTile
 		}
 	}
 	// Then perform flood fill conditionally on the flood layer
@@ -69,7 +75,7 @@ func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
 		y1 := int(areaStarts[i]) / l.Width
 		x2 := int(areaStarts[i+1]) % l.Width
 		y2 := int(areaStarts[i+1]) / l.Width
-		addCorridor(g, l, x1, y1, x2, y2, floor)
+		addCorridor(g, l, x1, y1, x2, y2, floorTile)
 	}
 
 	return m
@@ -80,11 +86,11 @@ func rep(l *Layer, r1, r2 int) {
 	for y := 0; y < l.Height; y++ {
 		for x := 0; x < l.Width; x++ {
 			i := x + y*l.Width
-			if l.countTiles(x, y, 1, road) >= r1 ||
-				l.countTiles(x, y, 2, road) <= r2 {
-				buf[i] = road
+			if l.countTiles(x, y, 1, roadTile) >= r1 ||
+				l.countTiles(x, y, 2, roadTile) <= r2 {
+				buf[i] = roadTile
 			} else {
-				buf[i] = floor
+				buf[i] = floorTile
 			}
 		}
 	}
