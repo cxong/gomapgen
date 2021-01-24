@@ -4,6 +4,7 @@ import (
 	"math/rand"
 )
 
+// Lobby placement - on edge, off the edge, or any position
 const (
 	LobbyEdge = iota
 	LobbyInterior

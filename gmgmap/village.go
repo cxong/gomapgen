@@ -8,12 +8,12 @@ import (
 	"github.com/beefsack/go-astar"
 )
 
-type Building struct {
+type building struct {
 	r          rect
 	importance int
 }
 
-func (b Building) addNPC(c *Layer) {
+func (b building) addNPC(c *Layer) {
 	// Try to place a random NPC somewhere inside the building
 	for i := 0; i < 100; i++ {
 		x := rand.Intn(b.r.w-2) + b.r.x + 1
@@ -45,8 +45,8 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	return m
 }
 
-func genBuildings(width, height, buildingPadding int) []Building {
-	buildings := make([]Building, 0)
+func genBuildings(width, height, buildingPadding int) []building {
+	buildings := make([]building, 0)
 	// Keep placing buildings for a while
 	for i := 0; i < 500; i++ {
 		w := rand.Intn(3) + 5
@@ -74,19 +74,19 @@ func genBuildings(width, height, buildingPadding int) []Building {
 		if overlaps {
 			continue
 		}
-		buildings = append(buildings, Building{rect{x, y, w, h}, 0})
+		buildings = append(buildings, building{rect{x, y, w, h}, 0})
 	}
 	return buildings
 }
 
-func assignBuildingImportance(buildings []Building) {
+func assignBuildingImportance(buildings []building) {
 	for i := range buildings {
 		imp := int(math.Pow(float64(rand.Float32()*3.0+1), 2))
 		buildings[i].importance = imp
 	}
 }
 
-func placeBuildings(g, s, f *Layer, buildings []Building) {
+func placeBuildings(g, s, f *Layer, buildings []building) {
 	for _, building := range buildings {
 		imp := building.importance
 		// Use tiles based on importance
@@ -99,7 +99,7 @@ func placeBuildings(g, s, f *Layer, buildings []Building) {
 	}
 }
 
-func addPaths(g, s *Layer, buildings []Building) {
+func addPaths(g, s *Layer, buildings []building) {
 	// Draw paths between random pairs of entrances via importance
 	// Ensure at least one path exists for all buildings
 
@@ -108,7 +108,7 @@ func addPaths(g, s *Layer, buildings []Building) {
 		impSum += building.importance
 	}
 
-	world := NewVillageWorld(g.Width, g.Height, s)
+	world := newVillageWorld(g.Width, g.Height, s)
 	buildingsWithPaths := map[int]bool{}
 	numPaths := len(buildings) * 3
 	for i := 0; i < numPaths || len(buildingsWithPaths) < len(buildings); i++ {
@@ -143,7 +143,7 @@ func addPaths(g, s *Layer, buildings []Building) {
 				fmt.Println("Could not find path")
 			} else {
 				for _, t := range path {
-					world.incUsage(t.(*VillageTile).x, t.(*VillageTile).y)
+					world.incUsage(t.(*villageTile).x, t.(*villageTile).y)
 				}
 			}
 			break
@@ -153,7 +153,7 @@ func addPaths(g, s *Layer, buildings []Building) {
 	placePaths(g, s, world, tree, grass, road, road2)
 }
 
-func placePaths(g, s *Layer, world VillageWorld, usage0, usage1, usage2, usage3 rune) {
+func placePaths(g, s *Layer, world villageWorld, usage0, usage1, usage2, usage3 rune) {
 	// Draw paths based on how well they're used
 	for y := 0; y < g.Height; y++ {
 		for x := 0; x < g.Width; x++ {
@@ -173,7 +173,7 @@ func placePaths(g, s *Layer, world VillageWorld, usage0, usage1, usage2, usage3 
 	}
 }
 
-func placeNPCs(c *Layer, buildings []Building) {
+func placeNPCs(c *Layer, buildings []building) {
 	// Place NPCs based on importance
 	for _, building := range buildings {
 		for i := 0; i < building.importance/2; i++ {
@@ -198,14 +198,14 @@ func addBuilding(g, s, f *Layer, r rect, tileRoom, tileWall rune, hasSign bool) 
 }
 
 // Special tile types for A* to find paths via erosion
-type VillageTile struct {
+type villageTile struct {
 	x, y  int
 	s     *Layer
-	w     VillageWorld
+	w     villageWorld
 	usage int
 }
 
-func (t *VillageTile) PathNeighbors() []astar.Pather {
+func (t *villageTile) PathNeighbors() []astar.Pather {
 	neighbors := []astar.Pather{}
 	for _, offset := range [][]int{
 		{-1, 0},
@@ -220,39 +220,39 @@ func (t *VillageTile) PathNeighbors() []astar.Pather {
 	return neighbors
 }
 
-func (t *VillageTile) PathNeighborCost(to astar.Pather) float64 {
-	toT := to.(*VillageTile)
+func (t *villageTile) PathNeighborCost(to astar.Pather) float64 {
+	toT := to.(*villageTile)
 	// Max cost 1.5, min cost 1 (asymptote)
 	return 0.5/float64(toT.usage+1) + 1
 }
 
-func (t *VillageTile) PathEstimatedCost(to astar.Pather) float64 {
-	toT := to.(*VillageTile)
+func (t *villageTile) PathEstimatedCost(to astar.Pather) float64 {
+	toT := to.(*villageTile)
 	return euclideanDistance(t.x, t.y, toT.x, toT.y)
 }
 
-type VillageWorld map[int]map[int]*VillageTile
+type villageWorld map[int]map[int]*villageTile
 
-func NewVillageWorld(w, h int, s *Layer) VillageWorld {
-	world := VillageWorld{}
+func newVillageWorld(w, h int, s *Layer) villageWorld {
+	world := villageWorld{}
 	for x := 0; x < w; x++ {
 		for y := 0; y < h; y++ {
-			world.setTile(&VillageTile{x, y, s, world, 0}, x, y)
+			world.setTile(&villageTile{x, y, s, world, 0}, x, y)
 		}
 	}
 	return world
 }
 
-func (w VillageWorld) tile(x, y int) *VillageTile {
+func (w villageWorld) tile(x, y int) *villageTile {
 	if w[x] == nil {
 		return nil
 	}
 	return w[x][y]
 }
 
-func (w VillageWorld) setTile(t *VillageTile, x, y int) {
+func (w villageWorld) setTile(t *villageTile, x, y int) {
 	if w[x] == nil {
-		w[x] = map[int]*VillageTile{}
+		w[x] = map[int]*villageTile{}
 	}
 	w[x][y] = t
 	t.x = x
@@ -261,16 +261,16 @@ func (w VillageWorld) setTile(t *VillageTile, x, y int) {
 	t.usage = 0
 }
 
-func (w VillageWorld) incUsage(x, y int) {
+func (w villageWorld) incUsage(x, y int) {
 	w[x][y].usage++
 }
 
-func (w VillageWorld) getUsage(x, y int) int {
+func (w villageWorld) getUsage(x, y int) int {
 	return w[x][y].usage
 }
 
 // Use A* to find and return a path between two points
 // A* will avoid any tiles where there's something in the structure (s) layer
-func (w VillageWorld) addPath(x1, y1, x2, y2 int) (path []astar.Pather, distance float64, found bool) {
+func (w villageWorld) addPath(x1, y1, x2, y2 int) (path []astar.Pather, distance float64, found bool) {
 	return astar.Path(w.tile(x1, y1), w.tile(x2, y2))
 }

@@ -354,12 +354,14 @@ func addCorridor(g, s *Layer, startX, startY, endX, endY int, tile rune) {
 	set(endX, endY)
 }
 
+// Tile - Single tile on the map for astar
 type Tile struct {
 	x, y int
 	s    *Layer
 	w    World
 }
 
+// PathNeighbors - Get neighbours for astar pathfinding
 func (t *Tile) PathNeighbors() []astar.Pather {
 	neighbors := []astar.Pather{}
 	for _, offset := range [][]int{
@@ -375,15 +377,18 @@ func (t *Tile) PathNeighbors() []astar.Pather {
 	return neighbors
 }
 
+// PathNeighborCost - cost of traveling to neighbour for astar
 func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
 	return 1
 }
 
+// PathEstimatedCost - heuristic cost of path for astar, using manhattan distance
 func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
 	toT := to.(*Tile)
 	return float64(manhattanDistance(t.x, t.y, toT.x, toT.y))
 }
 
+// World - 2D array of tiles
 type World map[int]map[int]*Tile
 
 func (w World) tile(x, y int) *Tile {

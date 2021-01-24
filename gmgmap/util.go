@@ -145,6 +145,7 @@ func bspSplitVertical(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, erro
 		nil
 }
 
+// Abs - absolute value, integer
 func Abs(x int) int {
 	if x < 0 {
 		return -x
