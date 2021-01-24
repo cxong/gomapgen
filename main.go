@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	algo := flag.String("algo", "shop", "generation algorithm: bsp/cell/rogue/shop/walk")
+	algo := flag.String("algo", "bspinterior", "generation algorithm: bsp/bspinterior/cell/rogue/shop/walk")
 	template := flag.String("template", "dawnlike", "TMX export template: dawnlike/kenney")
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
@@ -30,7 +30,7 @@ func main() {
 	connectionIterations := flag.Int(
 		"connectioniterations", 15, "iterations for connection phase for bsp algo")
 	lobbyEdgeType := flag.Int(
-		"lobbyedge", gmgmap.LOBBY_EDGE,
+		"lobbyedge", gmgmap.LobbyEdge,
 		"lobby placement for interior algo; 0=edge, 1=interior, 2=any")
 	buildingPadding := flag.Int(
 		"buildingPadding", 1, "padding between village buildings")
@@ -43,6 +43,8 @@ func main() {
 	switch *algo {
 	case "bsp":
 		m = gmgmap.NewBSP(*width, *height, *splits, *minRoomSize, *connectionIterations)
+	case "bspinterior":
+		m = gmgmap.NewBSPInterior(*width, *height, *minRoomSize)
 	case "cell":
 		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct, *reps, *r1, *r2)
 	case "interior":

@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	LOBBY_EDGE = iota
-	LOBBY_INTERIOR
-	LOBBY_ANY
+	LobbyEdge = iota
+	LobbyInterior
+	LobbyAny
 )
 
 // NewInterior - create a building interior layout map.
@@ -72,12 +72,12 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 		lobby = rooms[roomIndices[i]]
 		// Check if the lobby placement is ok;
 		// If it's on the edge or in the interior
-		if lobbyEdge == LOBBY_EDGE {
+		if lobbyEdge == LobbyEdge {
 			if lobby.r.x == 0 || lobby.r.y == 0 ||
 				lobby.r.x+lobby.r.w == width || lobby.r.y+lobby.r.h == height {
 				break
 			}
-		} else if lobbyEdge == LOBBY_INTERIOR {
+		} else if lobbyEdge == LobbyInterior {
 			if lobby.r.x > 0 && lobby.r.y > 0 &&
 				lobby.r.x+lobby.r.w < width && lobby.r.y+lobby.r.h < height {
 				break
