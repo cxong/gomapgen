@@ -6,8 +6,10 @@ import (
 )
 
 // NewBSPInterior - Create new BSP interior map
+// Implementation of https://gamedev.stackexchange.com/questions/47917/procedural-house-with-rooms-generator/48216#48216
 func NewBSPInterior(width, height, minRoomSize int) *Map {
 	iterations := 4
+	corridorWidth := 2
 	m := NewMap(width, height)
 
 	// Split the map for a number of iterations, choosing alternating axis and random location
@@ -22,16 +24,28 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 		var err error
 		horizontal := ((hcount + int(math.Log2(float64(i)))) % 2) == 1
 		if horizontal {
-			r1, r2, err = bspSplitHorizontal(&areas[i], i, minRoomSize)
+			r1, r2, err = bspSplitHorizontal(&areas[i], i, minRoomSize+corridorWidth/2)
 		} else {
-			r1, r2, err = bspSplitVertical(&areas[i], i, minRoomSize)
+			r1, r2, err = bspSplitVertical(&areas[i], i, minRoomSize+corridorWidth/2)
 		}
 		if err == nil {
 			// Resize rooms to allow space for street
-			if horizontal {
-				r1.r.w--
-			} else {
-				r1.r.h--
+			for j := 0; j < corridorWidth; j++ {
+				if horizontal {
+					if j%2 == 0 {
+						r1.r.w--
+					} else {
+						r2.r.x++
+						r2.r.w--
+					}
+				} else {
+					if j%2 == 0 {
+						r1.r.h--
+					} else {
+						r2.r.y++
+						r2.r.h--
+					}
+				}
 			}
 			areas[i].child1 = len(areas)
 			areas = append(areas, r1)
@@ -56,6 +70,7 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 		r.h = areas[i].r.h
 		r.y = areas[i].r.y
 		g.rectangleFilled(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, room)
+		g.rectangleUnfilled(r, nothing)
 		s.rectangleUnfilled(r, wall2)
 	}
 
