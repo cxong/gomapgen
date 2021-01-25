@@ -6,6 +6,10 @@ import (
 	"math/rand"
 )
 
+type vec2 struct {
+	x, y int
+}
+
 type rect struct {
 	x, y, w, h int
 }
