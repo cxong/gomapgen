@@ -30,6 +30,10 @@ func rectOverlaps(r1, r2 rect) bool {
 		r1.y < r2.y+r2.h && r1.y+r1.h > r2.y
 }
 
+func (r rect) isIn(x, y int) bool {
+	return x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h
+}
+
 func randomWalk(x, y, w, h int) (int, int) {
 	for {
 		// Choose random direction, up/right/down/left

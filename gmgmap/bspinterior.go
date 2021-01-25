@@ -16,7 +16,7 @@ type street struct {
 func NewBSPInterior(width, height, minRoomSize int) *Map {
 	iterations := 4
 	corridorWidth := 2
-	// corridorLevelDiffBlock := 2
+	corridorLevelDiffBlock := 1
 	m := NewMap(width, height)
 
 	// Split the map for a number of iterations, choosing alternating axis and random location
@@ -101,16 +101,28 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 			dAlong = vec2{0, 1}
 			dAcross = vec2{1, 0}
 		}
-		capStreet(g, s, end1, dAcross, dAlong, corridorWidth)
-		capStreet(g, s, end2, vec2{-dAcross.x, -dAcross.y}, vec2{-dAlong.x, -dAlong.y}, corridorWidth)
+		capStreet(g, s, streets, streets[i], end1, dAcross, dAlong, corridorWidth, corridorLevelDiffBlock)
+		capStreet(g, s, streets, streets[i], end2, vec2{-dAcross.x, -dAcross.y}, vec2{-dAlong.x, -dAlong.y}, corridorWidth, corridorLevelDiffBlock)
 	}
 
 	return m
 }
 
-func capStreet(g, s *Layer, end, dAcross, dAlong vec2, corridorWidth int) {
+func capStreet(g, s *Layer, streets []street, st street, end, dAcross, dAlong vec2, corridorWidth, corridorLevelDiffBlock int) {
 	// Check ends of street - if outside map, or next to much older street, block off with wall
-	if !g.isIn(end.x-dAlong.x, end.y-dAlong.y) {
+	outside := vec2{end.x - dAlong.x, end.y - dAlong.y}
+	doCap := false
+	if !g.isIn(outside.x, outside.y) {
+		doCap = true
+	} else {
+		for i := range streets {
+			if streets[i].r.isIn(outside.x, outside.y) && st.level-streets[i].level > corridorLevelDiffBlock {
+				doCap = true
+				break
+			}
+		}
+	}
+	if doCap {
 		for i := 0; i < corridorWidth; i++ {
 			g.setTile(end.x+dAcross.x*i, end.y+dAcross.y*i, nothing)
 			s.setTile(end.x+dAcross.x*i, end.y+dAcross.y*i, wall2)
