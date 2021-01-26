@@ -86,6 +86,35 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 		r.y = areas[i].r.y
 		g.rectangleFilled(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, room)
 		s.rectangleUnfilled(r, wall2)
+		// Add doors leading to hallways
+		for j := 0; j < 4; j++ {
+			doorPos := vec2{areas[i].r.x + areas[i].r.w/2, areas[i].r.y + areas[i].r.h/2}
+			var outsideDoor vec2
+			if j == 0 {
+				// top
+				doorPos.y = areas[i].r.y
+				outsideDoor = vec2{doorPos.x, doorPos.y - 1}
+			} else if j == 1 {
+				// right
+				doorPos.x = areas[i].r.x + areas[i].r.w - 1
+				outsideDoor = vec2{doorPos.x + 1, doorPos.y}
+			} else if j == 2 {
+				// bottom
+				doorPos.y = areas[i].r.y + areas[i].r.h - 1
+				outsideDoor = vec2{doorPos.x, doorPos.y + 1}
+			} else {
+				// left
+				doorPos.x = areas[i].r.x
+				outsideDoor = vec2{doorPos.x - 1, doorPos.y}
+			}
+			for i := range streets {
+				if streets[i].r.isIn(outsideDoor.x, outsideDoor.y) {
+					g.setTile(doorPos.x, doorPos.y, room)
+					s.setTile(doorPos.x, doorPos.y, door)
+					break
+				}
+			}
+		}
 	}
 	// Fill streets
 	for i := range streets {
