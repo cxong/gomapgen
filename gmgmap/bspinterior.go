@@ -12,9 +12,7 @@ type street struct {
 
 // NewBSPInterior - Create new BSP interior map
 // Implementation of https://gamedev.stackexchange.com/questions/47917/procedural-house-with-rooms-generator/48216#48216
-func NewBSPInterior(width, height, minRoomSize int) *Map {
-	iterations := 4
-	corridorWidth := 2
+func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map {
 	corridorLevelDiffBlock := 1
 	m := NewMap(width, height)
 
@@ -24,7 +22,7 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 	hcount := rand.Intn(2)
 	areas = append(areas, bspRoomRoot(width, height))
 	for i := 0; i < len(areas); i++ {
-		if areas[i].level == iterations {
+		if areas[i].level == splits {
 			break
 		}
 		var r1, r2 bspRoom
@@ -74,11 +72,34 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
 	// Turn the leaves into rooms
-	for i := range areas {
+	for i := 0; i < len(areas); i++ {
 		// Only place rooms in leaf nodes
 		if areas[i].child1 >= 0 || areas[i].child2 >= 0 {
 			continue
 		}
+
+		// Try to split into more rooms, length-wise
+		var r1, r2 bspRoom
+		var err error = nil
+		if !areas[i].horizontal {
+			r1, r2, err = bspSplitHorizontal(&areas[i], i, minRoomSize)
+		} else {
+			r1, r2, err = bspSplitVertical(&areas[i], i, minRoomSize)
+		}
+		if err == nil {
+			// Resize rooms so they share a splitting wall
+			if r1.horizontal {
+				r1.r.w++
+			} else {
+				r1.r.h++
+			}
+			areas[i].child1 = len(areas)
+			areas = append(areas, r1)
+			areas[i].child2 = len(areas)
+			areas = append(areas, r2)
+			continue
+		}
+
 		var r rect
 		r.w = areas[i].r.w
 		r.x = areas[i].r.x

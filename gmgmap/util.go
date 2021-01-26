@@ -99,10 +99,11 @@ type bspRoom struct {
 	parent         int
 	child1, child2 int
 	level          int
+	horizontal     bool
 }
 
 func bspRoomRoot(width, height int) bspRoom {
-	return bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0}
+	return bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0, false}
 }
 
 func bspSplit(room *bspRoom, i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom, error) {
@@ -132,8 +133,8 @@ func bspSplitHorizontal(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, er
 	} else {
 		x = rand.Intn(r) + minRoomSize
 	}
-	return bspRoom{rect{room.r.x, room.r.y, x, room.r.h}, i, -1, -1, room.level + 1},
-		bspRoom{rect{room.r.x + x, room.r.y, room.r.w - x, room.r.h}, i, -1, -1, room.level + 1},
+	return bspRoom{rect{room.r.x, room.r.y, x, room.r.h}, i, -1, -1, room.level + 1, true},
+		bspRoom{rect{room.r.x + x, room.r.y, room.r.w - x, room.r.h}, i, -1, -1, room.level + 1, true},
 		nil
 }
 
@@ -148,8 +149,8 @@ func bspSplitVertical(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, erro
 	} else {
 		y = rand.Intn(r) + minRoomSize
 	}
-	return bspRoom{rect{room.r.x, room.r.y, room.r.w, y}, i, -1, -1, room.level + 1},
-		bspRoom{rect{room.r.x, room.r.y + y, room.r.w, room.r.h - y}, i, -1, -1, room.level + 1},
+	return bspRoom{rect{room.r.x, room.r.y, room.r.w, y}, i, -1, -1, room.level + 1, false},
+		bspRoom{rect{room.r.x, room.r.y + y, room.r.w, room.r.h - y}, i, -1, -1, room.level + 1, false},
 		nil
 }
 

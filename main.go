@@ -24,7 +24,7 @@ func main() {
 	r1 := flag.Int("r1", 5, "R1 cutoff, for cell algo")
 	r2 := flag.Int("r2", 2, "R2 cutoff, for cell algo")
 	reps := flag.Int("reps", 4, "reps, for cell algo")
-	splits := flag.Int("splits", 4, "number of splits for bsp algo")
+	splits := flag.Int("splits", 4, "number of splits for bsp/bspinterior algo")
 	minRoomSize := flag.Int("minroomsize", 5, "minimum room width/height")
 	maxRoomSize := flag.Int("maxroomsize", 10, "maximum room width/height")
 	connectionIterations := flag.Int(
@@ -34,6 +34,8 @@ func main() {
 		"lobby placement for interior algo; 0=edge, 1=interior, 2=any")
 	buildingPadding := flag.Int(
 		"buildingPadding", 1, "padding between village buildings")
+	corridorWidth := flag.Int(
+		"corridorWidth", 1, "width of corridors (bspinterior only)")
 	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "random seed")
 	flag.Parse()
 	// make map
@@ -44,7 +46,7 @@ func main() {
 	case "bsp":
 		m = gmgmap.NewBSP(*width, *height, *splits, *minRoomSize, *connectionIterations)
 	case "bspinterior":
-		m = gmgmap.NewBSPInterior(*width, *height, *minRoomSize)
+		m = gmgmap.NewBSPInterior(*width, *height, *splits, *minRoomSize, *corridorWidth)
 	case "cell":
 		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct, *reps, *r1, *r2)
 	case "interior":
