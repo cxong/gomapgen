@@ -85,14 +85,12 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
-	// Turn the leaves into rooms
 	for i := 0; i < len(areas); i++ {
-		// Only place rooms in leaf nodes
+		// Try to split leaf rooms into more rooms, length-wise
 		if areas[i].child1 >= 0 || areas[i].child2 >= 0 {
 			continue
 		}
 
-		// Try to split into more rooms, length-wise
 		var r1, r2 bspRoom
 		var err error = nil
 		if !areas[i].horizontal {
@@ -111,9 +109,18 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			areas = append(areas, r1)
 			areas[i].child2 = len(areas)
 			areas = append(areas, r2)
-			continue
 		}
-
+	}
+	// Discard non-leaf rooms
+	for i := 0; i < len(areas); i++ {
+		if areas[i].child1 >= 0 || areas[i].child2 >= 0 {
+			areas[i] = areas[len(areas)-1]
+			areas = areas[0 : len(areas)-1]
+			i--
+		}
+	}
+	for i := range areas {
+		// Fill rooms
 		var r rect
 		r.w = areas[i].r.w
 		r.x = areas[i].r.x
@@ -121,7 +128,10 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		r.y = areas[i].r.y
 		g.rectangleFilled(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, room)
 		s.rectangleUnfilled(r, wall2)
+
 		// Add doors leading to hallways
+		// Reuse level attribute for distance from hallway
+		areas[i].level = -1
 		for j := 0; j < 4; j++ {
 			doorPos := vec2{areas[i].r.x + areas[i].r.w/2, areas[i].r.y + areas[i].r.h/2}
 			var outsideDoor vec2
@@ -142,13 +152,65 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				doorPos.x = areas[i].r.x
 				outsideDoor = vec2{doorPos.x - 1, doorPos.y}
 			}
-			for i := range streets {
-				if streets[i].r.isIn(outsideDoor.x, outsideDoor.y) {
+			for k := range streets {
+				if streets[k].r.isIn(outsideDoor.x, outsideDoor.y) {
 					g.setTile(doorPos.x, doorPos.y, room)
 					s.setTile(doorPos.x, doorPos.y, door)
+					areas[i].level = 0
 					break
 				}
 			}
+		}
+	}
+	// For every room, connect it to a random room with lower depth
+	// Keep going until all rooms are connected
+	for {
+		numUnconnected := 0
+		for i := range areas {
+			if areas[i].level >= 0 {
+				continue
+			}
+			numUnconnected++
+			r := areas[i].r
+			// Shrink rectangles by 1 to determine overlap
+			r.w--
+			r.h--
+			overlapSize := 1
+			for j := range areas {
+				if i == j {
+					continue
+				}
+				roomOther := areas[j]
+				// Only connect to a room that is also connected
+				if roomOther.level < 0 {
+					continue
+				}
+				rOther := roomOther.r
+				// Shrink rectangles by 1 to determine overlap
+				rOther.w--
+				rOther.h--
+				if !rectIsAdjacent(r, rOther, overlapSize) {
+					continue
+				}
+				// Rooms are adjacent; pick the cell that's in the middle of the
+				// adjacent area and turn into a door
+				minOverlapX := imin(
+					areas[i].r.x+areas[i].r.w, roomOther.r.x+roomOther.r.w)
+				maxOverlapX := imax(areas[i].r.x, roomOther.r.x)
+				minOverlapY := imin(
+					areas[i].r.y+areas[i].r.h, roomOther.r.y+roomOther.r.h)
+				maxOverlapY := imax(areas[i].r.y, roomOther.r.y)
+				overlapX := (minOverlapX + maxOverlapX) / 2
+				overlapY := (minOverlapY + maxOverlapY) / 2
+				g.setTile(overlapX, overlapY, room2)
+				s.setTile(overlapX, overlapY, door)
+				areas[i].level = roomOther.level + 1
+				numUnconnected--
+				break
+			}
+		}
+		if numUnconnected == 0 {
+			break
 		}
 	}
 
