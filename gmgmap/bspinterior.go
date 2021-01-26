@@ -10,6 +10,20 @@ type street struct {
 	level      int
 }
 
+func (s street) dAlong() vec2 {
+	if s.horizontal {
+		return vec2{1, 0}
+	}
+	return vec2{0, 1}
+}
+
+func (s street) dAcross() vec2 {
+	if s.horizontal {
+		return vec2{0, 1}
+	}
+	return vec2{1, 0}
+}
+
 // NewBSPInterior - Create new BSP interior map
 // Implementation of https://gamedev.stackexchange.com/questions/47917/procedural-house-with-rooms-generator/48216#48216
 func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map {
@@ -137,30 +151,22 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			}
 		}
 	}
+
 	// Fill streets
 	for i := range streets {
 		g.rectangleFilled(streets[i].r, room2)
 		// Check ends of street - if next to much older street, block off with wall
 		end1 := vec2{streets[i].r.x, streets[i].r.y}
 		end2 := vec2{streets[i].r.x + streets[i].r.w - 1, streets[i].r.y + streets[i].r.h - 1}
-		var dAlong, dAcross vec2
-		if streets[i].horizontal {
-			dAlong = vec2{1, 0}
-			dAcross = vec2{0, 1}
-		} else {
-			dAlong = vec2{0, 1}
-			dAcross = vec2{1, 0}
-		}
-		capStreet(g, s, streets, streets[i], end1, dAcross, dAlong, corridorWidth, corridorLevelDiffBlock)
-		capStreet(g, s, streets, streets[i], end2, vec2{-dAcross.x, -dAcross.y}, vec2{-dAlong.x, -dAlong.y}, corridorWidth, corridorLevelDiffBlock)
-
-		// Place stairs at one end of first (main) street and last street
-		if i == 0 {
-			s.setTile(streets[i].r.x+dAlong.x, streets[i].r.y+dAlong.y, stairsUp)
-		} else if i == len(streets)-1 {
-			s.setTile(streets[i].r.x+dAlong.x, streets[i].r.y+dAlong.y, stairsDown)
-		}
+		capStreet(g, s, streets, streets[i], end1, streets[i].dAcross(), streets[i].dAlong(), corridorWidth, corridorLevelDiffBlock)
+		capStreet(g, s, streets, streets[i], end2, vec2{-streets[i].dAcross().x, -streets[i].dAcross().y}, vec2{-streets[i].dAlong().x, -streets[i].dAlong().y}, corridorWidth, corridorLevelDiffBlock)
 	}
+
+	// Place stairs going up at end of first (main) street
+	s.setTile(streets[0].r.x+streets[0].dAlong().x, streets[0].r.y+streets[0].dAlong().y, stairsUp)
+	// Place stairs going down in last room
+	lastRoomRect := areas[len(areas)-1].r
+	s.setTile(lastRoomRect.x+lastRoomRect.w/2, lastRoomRect.y+lastRoomRect.h/2, stairsDown)
 
 	return m
 }
