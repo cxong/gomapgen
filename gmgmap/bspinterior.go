@@ -29,6 +29,7 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 		}
 		var r1, r2 bspRoom
 		var err error = nil
+		// Alternate splitting direction per level
 		horizontal := ((hcount + areas[i].level) % 2) == 1
 		if horizontal {
 			r1, r2, err = bspSplitHorizontal(&areas[i], i, minRoomSize+corridorWidth/2)
@@ -102,6 +103,13 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 		}
 		capStreet(g, s, streets, streets[i], end1, dAcross, dAlong, corridorWidth, corridorLevelDiffBlock)
 		capStreet(g, s, streets, streets[i], end2, vec2{-dAcross.x, -dAcross.y}, vec2{-dAlong.x, -dAlong.y}, corridorWidth, corridorLevelDiffBlock)
+
+		// Place stairs at one end of first (main) street and last street
+		if i == 0 {
+			s.setTile(streets[i].r.x+dAlong.x, streets[i].r.y+dAlong.y, stairsUp)
+		} else if i == len(streets)-1 {
+			s.setTile(streets[i].r.x+dAlong.x, streets[i].r.y+dAlong.y, stairsDown)
+		}
 	}
 
 	return m
