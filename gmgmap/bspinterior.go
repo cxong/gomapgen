@@ -1,7 +1,6 @@
 package gmgmap
 
 import (
-	"math"
 	"math/rand"
 )
 
@@ -30,7 +29,7 @@ func NewBSPInterior(width, height, minRoomSize int) *Map {
 		}
 		var r1, r2 bspRoom
 		var err error = nil
-		horizontal := ((hcount + int(math.Log2(float64(i)))) % 2) == 1
+		horizontal := ((hcount + areas[i].level) % 2) == 1
 		if horizontal {
 			r1, r2, err = bspSplitHorizontal(&areas[i], i, minRoomSize+corridorWidth/2)
 		} else {
