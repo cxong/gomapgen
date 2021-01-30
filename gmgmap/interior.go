@@ -28,7 +28,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 	var rooms []bspRoom
 	rooms = append(rooms, bspRoomRoot(width, height))
 	for i := 0; i < len(rooms); i++ {
-		if r1, r2, err := bspSplit(&rooms[i], i, minRoomSize, maxRoomSize); err == nil {
+		if r1, r2, err := rooms[i].Split(i, minRoomSize, maxRoomSize); err == nil {
 			rooms[i].child1 = len(rooms)
 			rooms = append(rooms, r1)
 			rooms[i].child2 = len(rooms)
@@ -37,7 +37,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 	}
 	// Discard non-leaf rooms
 	for i := 0; i < len(rooms); i++ {
-		if rooms[i].child1 >= 0 || rooms[i].child2 >= 0 {
+		if !rooms[i].IsLeaf() {
 			rooms[i] = rooms[len(rooms)-1]
 			rooms = rooms[0 : len(rooms)-1]
 			i--
@@ -118,7 +118,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 					continue
 				}
 				rOther := rect{roomOther.r.x, roomOther.r.y, roomOther.r.w - 1, roomOther.r.h - 1}
-				if rectIsAdjacent(r, rOther, overlapSize) {
+				if r.IsAdjacent(rOther, overlapSize) {
 					room.level = level
 					rooms[i] = room
 					hasMoreRooms = true
@@ -137,7 +137,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 				continue
 			}
 			rOther := rect{roomOther.r.x, roomOther.r.y, roomOther.r.w - 1, roomOther.r.h - 1}
-			if !rectIsAdjacent(r, rOther, overlapSize) {
+			if !r.IsAdjacent(rOther, overlapSize) {
 				continue
 			}
 			// Rooms are adjacent; pick the cell that's in the middle of the

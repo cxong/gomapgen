@@ -15,7 +15,7 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 		if areas[i].level == iterations {
 			break
 		}
-		if r1, r2, err := bspSplit(&areas[i], i, minRoomSize, 0); err == nil {
+		if r1, r2, err := areas[i].Split(i, minRoomSize, 0); err == nil {
 			areas[i].child1 = len(areas)
 			areas = append(areas, r1)
 			areas[i].child2 = len(areas)
@@ -28,7 +28,7 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 	// Place rooms randomly into the split areas
 	for i := range areas {
 		// Only place rooms in leaf nodes
-		if areas[i].child1 >= 0 || areas[i].child2 >= 0 {
+		if !areas[i].IsLeaf() {
 			continue
 		}
 		var r rect
@@ -93,12 +93,12 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 		i := rand.Intn(len(areas))
 		a := areas[i]
 		// Leaves only
-		if a.child1 >= 0 || a.child2 >= 0 {
+		if !a.IsLeaf() {
 			continue
 		}
 		// Pick a random cardinal direction
-		dx := rand.Intn(1) * 2 - 1
-		dy := rand.Intn(1) * 2 - 1
+		dx := rand.Intn(1)*2 - 1
+		dy := rand.Intn(1)*2 - 1
 		if rand.Intn(1) > 0 {
 			dx = 0
 		} else {
@@ -108,7 +108,7 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 		c1 := areas[a.parent].child1
 		c2 := areas[a.parent].child2
 		if c1 >= 0 && c2 >= 0 {
-			sibling := areas[c1 + c2 - i]
+			sibling := areas[c1+c2-i]
 			if (a.r.x < sibling.r.x && dx == 1) ||
 				(a.r.x > sibling.r.x && dx == -1) ||
 				(a.r.y < sibling.r.y && dy == 1) ||
@@ -118,13 +118,13 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 		}
 		// Test the corridor direction outwards; if it hits the map edge without
 		// reaching an end then don't use this direction
-		x := a.r.x + a.r.w / 2
+		x := a.r.x + a.r.w/2
 		if dx > 0 {
 			x = a.r.x + a.r.w
 		} else if dx < 0 {
 			x = a.r.x
 		}
-		y := a.r.y + a.r.h / 2
+		y := a.r.y + a.r.h/2
 		if dy > 0 {
 			x = a.r.y + a.r.h
 		} else if dy < 0 {
@@ -187,18 +187,18 @@ func drawInDirection(g, s *Layer, startX, startY, dx, dy int, tile, wall rune) {
 			g.setTile(x, y, tile)
 			s.setTile(x, y, nothing)
 			if dx == 0 {
-				if s.isIn(x + 1, y) && g.getTile(x + 1, y) == nothing {
-					s.setTile(x + 1, y, wall)
+				if s.isIn(x+1, y) && g.getTile(x+1, y) == nothing {
+					s.setTile(x+1, y, wall)
 				}
-				if s.isIn(x - 1, y) && g.getTile(x - 1, y) == nothing {
-					s.setTile(x - 1, y, wall)
+				if s.isIn(x-1, y) && g.getTile(x-1, y) == nothing {
+					s.setTile(x-1, y, wall)
 				}
 			} else {
-				if s.isIn(x, y + 1) && g.getTile(x, y + 1) == nothing {
-					s.setTile(x, y + 1, wall)
+				if s.isIn(x, y+1) && g.getTile(x, y+1) == nothing {
+					s.setTile(x, y+1, wall)
 				}
-				if s.isIn(x, y - 1) && g.getTile(x, y - 1) == nothing {
-					s.setTile(x, y - 1, wall)
+				if s.isIn(x, y-1) && g.getTile(x, y-1) == nothing {
+					s.setTile(x, y-1, wall)
 				}
 			}
 			if hasNeighbouringTile(*g, x, y, dx, dy) {
@@ -237,23 +237,23 @@ func canDrawInDirection(g Layer, startX, startY, dx, dy int) bool {
 
 func hasNeighbouringTile(l Layer, x, y, dx, dy int) bool {
 	if dx != 0 {
-		if hasTile(l, x, y + 1) {
+		if hasTile(l, x, y+1) {
 			return true
 		}
-		if hasTile(l, x, y - 1) {
+		if hasTile(l, x, y-1) {
 			return true
 		}
-		if hasTile(l, x + dx, y) {
+		if hasTile(l, x+dx, y) {
 			return true
 		}
 	} else {
-		if hasTile(l, x + 1, y) {
+		if hasTile(l, x+1, y) {
 			return true
 		}
-		if hasTile(l, x - 1, y) {
+		if hasTile(l, x-1, y) {
 			return true
 		}
-		if hasTile(l, x, y + dy) {
+		if hasTile(l, x, y+dy) {
 			return true
 		}
 	}

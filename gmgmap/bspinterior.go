@@ -29,10 +29,10 @@ func (s street) dAcross() vec2 {
 func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map {
 	corridorLevelDiffBlock := 1
 	m := NewMap(width, height)
-
-	// Split the map for a number of iterations, choosing alternating axis and random location
 	var areas []bspRoom
 	var streets []street
+
+	// Split the map for a number of iterations, choosing alternating axis and random location
 	hcount := rand.Intn(2)
 	areas = append(areas, bspRoomRoot(width, height))
 	for i := 0; i < len(areas); i++ {
@@ -44,9 +44,9 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		// Alternate splitting direction per level
 		horizontal := ((hcount + areas[i].level) % 2) == 1
 		if horizontal {
-			r1, r2, err = bspSplitHorizontal(&areas[i], i, minRoomSize+corridorWidth/2)
+			r1, r2, err = areas[i].SplitHorizontal(i, minRoomSize+corridorWidth/2)
 		} else {
-			r1, r2, err = bspSplitVertical(&areas[i], i, minRoomSize+corridorWidth/2)
+			r1, r2, err = areas[i].SplitVertical(i, minRoomSize+corridorWidth/2)
 		}
 		if err == nil {
 			// Resize rooms to allow space for street
@@ -82,21 +82,18 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			streets = append(streets, s)
 		}
 	}
-
-	g := m.Layer("Ground")
-	s := m.Layer("Structures")
+	// Try to split leaf rooms into more rooms, by longest axis
 	for i := 0; i < len(areas); i++ {
-		// Try to split leaf rooms into more rooms, length-wise
-		if areas[i].child1 >= 0 || areas[i].child2 >= 0 {
+		if !areas[i].IsLeaf() {
 			continue
 		}
 
 		var r1, r2 bspRoom
 		var err error = nil
-		if !areas[i].horizontal {
-			r1, r2, err = bspSplitHorizontal(&areas[i], i, minRoomSize)
+		if areas[i].r.w > areas[i].r.h {
+			r1, r2, err = areas[i].SplitHorizontal(i, minRoomSize)
 		} else {
-			r1, r2, err = bspSplitVertical(&areas[i], i, minRoomSize)
+			r1, r2, err = areas[i].SplitVertical(i, minRoomSize)
 		}
 		if err == nil {
 			// Resize rooms so they share a splitting wall
@@ -111,15 +108,14 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			areas = append(areas, r2)
 		}
 	}
-	// Discard non-leaf rooms
-	for i := 0; i < len(areas); i++ {
-		if areas[i].child1 >= 0 || areas[i].child2 >= 0 {
-			areas[i] = areas[len(areas)-1]
-			areas = areas[0 : len(areas)-1]
-			i--
-		}
-	}
+
+	g := m.Layer("Ground")
+	s := m.Layer("Structures")
 	for i := range areas {
+		// Skip non-leaves
+		if !areas[i].IsLeaf() {
+			continue
+		}
 		// Fill rooms
 		var r rect
 		r.w = areas[i].r.w
@@ -167,6 +163,10 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 	for {
 		numUnconnected := 0
 		for i := range areas {
+			// Skip non-leaves
+			if !areas[i].IsLeaf() {
+				continue
+			}
 			if areas[i].level >= 0 {
 				continue
 			}
@@ -177,6 +177,9 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			r.h--
 			overlapSize := 1
 			for j := range areas {
+				if !areas[j].IsLeaf() {
+					continue
+				}
 				if i == j {
 					continue
 				}
@@ -189,7 +192,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				// Shrink rectangles by 1 to determine overlap
 				rOther.w--
 				rOther.h--
-				if !rectIsAdjacent(r, rOther, overlapSize) {
+				if !r.IsAdjacent(rOther, overlapSize) {
 					continue
 				}
 				// Rooms are adjacent; pick the cell that's in the middle of the

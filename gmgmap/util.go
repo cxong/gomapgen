@@ -14,20 +14,20 @@ type rect struct {
 	x, y, w, h int
 }
 
-func rectIsAdjacent(r1, r2 rect, overlapSize int) bool {
+func (r rect) IsAdjacent(r2 rect, overlapSize int) bool {
 	// If left/right edges adjacent
-	if r1.x-(r2.x+r2.w) == 0 || r2.x-(r1.x+r1.w) == 0 {
-		return r1.y+overlapSize < r2.y+r2.h && r2.y+overlapSize < r1.y+r1.h
+	if r.x-(r2.x+r2.w) == 0 || r2.x-(r.x+r.w) == 0 {
+		return r.y+overlapSize < r2.y+r2.h && r2.y+overlapSize < r.y+r.h
 	}
-	if r1.y-(r2.y+r2.h) == 0 || r2.y-(r1.y+r1.h) == 0 {
-		return r1.x+overlapSize < r2.x+r2.w && r2.x+overlapSize < r1.x+r1.w
+	if r.y-(r2.y+r2.h) == 0 || r2.y-(r.y+r.h) == 0 {
+		return r.x+overlapSize < r2.x+r2.w && r2.x+overlapSize < r.x+r.w
 	}
 	return false
 }
 
-func rectOverlaps(r1, r2 rect) bool {
-	return r1.x < r2.x+r2.w && r1.x+r1.w > r2.x &&
-		r1.y < r2.y+r2.h && r1.y+r1.h > r2.y
+func (r rect) Overlaps(r2 rect) bool {
+	return r.x < r2.x+r2.w && r.x+r.w > r2.x &&
+		r.y < r2.y+r2.h && r.y+r.h > r2.y
 }
 
 func (r rect) isIn(x, y int) bool {
@@ -106,7 +106,7 @@ func bspRoomRoot(width, height int) bspRoom {
 	return bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0, false}
 }
 
-func bspSplit(room *bspRoom, i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom, error) {
+func (room *bspRoom) Split(i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom, error) {
 	// If the room is too small, then don't split
 	if room.r.w-minRoomSize*2 < 0 && room.r.h-minRoomSize < 0 {
 		return bspRoom{}, bspRoom{}, errors.New("room too small")
@@ -117,13 +117,13 @@ func bspSplit(room *bspRoom, i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom,
 	}
 	// If more than 2:1, split the long dimension, otherwise randomise
 	if room.r.w*2 > room.r.h || (room.r.h*2 < room.r.w && rand.Intn(2) == 0) {
-		return bspSplitHorizontal(room, i, minRoomSize)
+		return room.SplitHorizontal(i, minRoomSize)
 	}
-	return bspSplitVertical(room, i, minRoomSize)
+	return room.SplitVertical(i, minRoomSize)
 }
 
 // Split rooms horizontally (left + right children)
-func bspSplitHorizontal(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, error) {
+func (room *bspRoom) SplitHorizontal(i, minRoomSize int) (bspRoom, bspRoom, error) {
 	r := room.r.w - minRoomSize*2
 	var x int
 	if r < 0 {
@@ -139,7 +139,7 @@ func bspSplitHorizontal(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, er
 }
 
 // Split rooms horizontally (top + bottom children)
-func bspSplitVertical(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, error) {
+func (room *bspRoom) SplitVertical(i, minRoomSize int) (bspRoom, bspRoom, error) {
 	r := room.r.h - minRoomSize*2
 	var y int
 	if r < 0 {
@@ -152,6 +152,10 @@ func bspSplitVertical(room *bspRoom, i, minRoomSize int) (bspRoom, bspRoom, erro
 	return bspRoom{rect{room.r.x, room.r.y, room.r.w, y}, i, -1, -1, room.level + 1, false},
 		bspRoom{rect{room.r.x, room.r.y + y, room.r.w, room.r.h - y}, i, -1, -1, room.level + 1, false},
 		nil
+}
+
+func (room *bspRoom) IsLeaf() bool {
+	return room.child1 < 0 && room.child2 < 0
 }
 
 // Abs - absolute value, integer

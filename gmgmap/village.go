@@ -60,8 +60,7 @@ func genBuildings(width, height, buildingPadding int) []building {
 		overlaps := false
 		for _, b := range buildings {
 			// Add a bit of padding between the buildings
-			if rectOverlaps(
-				b.r,
+			if b.r.Overlaps(
 				rect{
 					x - buildingPadding,
 					y - buildingPadding,
