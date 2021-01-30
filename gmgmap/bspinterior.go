@@ -5,20 +5,20 @@ import (
 )
 
 type bspArea struct {
+	bspRoom
 	isStreet    bool
 	isConnected bool
-	bsp         bspRoom
 }
 
 func (s bspArea) dAlong() vec2 {
-	if s.bsp.horizontal {
+	if s.horizontal {
 		return vec2{1, 0}
 	}
 	return vec2{0, 1}
 }
 
 func (s bspArea) dAcross() vec2 {
-	if s.bsp.horizontal {
+	if s.horizontal {
 		return vec2{0, 1}
 	}
 	return vec2{1, 0}
@@ -33,19 +33,19 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 
 	// Split the map for a number of iterations, choosing alternating axis and random location
 	hcount := rand.Intn(2)
-	areas = append(areas, bspArea{false, false, bspRoomRoot(width, height)})
+	areas = append(areas, bspArea{bspRoomRoot(width, height), false, false})
 	for i := 0; i < len(areas); i++ {
-		if areas[i].bsp.level == splits {
+		if areas[i].level == splits {
 			break
 		}
 		var r1, r2 bspRoom
 		var err error = nil
 		// Alternate splitting direction per level
-		horizontal := ((hcount + areas[i].bsp.level) % 2) == 1
+		horizontal := ((hcount + areas[i].level) % 2) == 1
 		if horizontal {
-			r1, r2, err = areas[i].bsp.SplitHorizontal(i, minRoomSize+corridorWidth/2)
+			r1, r2, err = areas[i].SplitHorizontal(i, minRoomSize+corridorWidth/2)
 		} else {
-			r1, r2, err = areas[i].bsp.SplitVertical(i, minRoomSize+corridorWidth/2)
+			r1, r2, err = areas[i].SplitVertical(i, minRoomSize+corridorWidth/2)
 		}
 		if err == nil {
 			// Resize rooms to allow space for street
@@ -69,15 +69,15 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			// Replace current area with a street
 			areas[i].isStreet = true
 			if horizontal {
-				areas[i].bsp.r = rect{r1.r.x + r1.r.w, r1.r.y, corridorWidth, r1.r.h}
+				areas[i].r = rect{r1.r.x + r1.r.w, r1.r.y, corridorWidth, r1.r.h}
 			} else {
-				areas[i].bsp.r = rect{r1.r.x, r1.r.y + r1.r.h, r1.r.w, corridorWidth}
+				areas[i].r = rect{r1.r.x, r1.r.y + r1.r.h, r1.r.w, corridorWidth}
 			}
-			areas[i].bsp.horizontal = !horizontal
-			areas[i].bsp.child1 = len(areas)
-			areas = append(areas, bspArea{false, false, r1})
-			areas[i].bsp.child2 = len(areas)
-			areas = append(areas, bspArea{false, false, r2})
+			areas[i].horizontal = !horizontal
+			areas[i].child1 = len(areas)
+			areas = append(areas, bspArea{r1, false, false})
+			areas[i].child2 = len(areas)
+			areas = append(areas, bspArea{r2, false, false})
 		}
 	}
 	// Try to split leaf rooms into more rooms, by longest axis
@@ -88,10 +88,10 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 
 		var r1, r2 bspRoom
 		var err error = nil
-		if areas[i].bsp.r.w > areas[i].bsp.r.h {
-			r1, r2, err = areas[i].bsp.SplitHorizontal(i, minRoomSize)
+		if areas[i].r.w > areas[i].r.h {
+			r1, r2, err = areas[i].SplitHorizontal(i, minRoomSize)
 		} else {
-			r1, r2, err = areas[i].bsp.SplitVertical(i, minRoomSize)
+			r1, r2, err = areas[i].SplitVertical(i, minRoomSize)
 		}
 		if err == nil {
 			// Resize rooms so they share a splitting wall
@@ -100,10 +100,10 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			} else {
 				r1.r.h++
 			}
-			areas[i].bsp.child1 = len(areas)
-			areas = append(areas, bspArea{false, false, r1})
-			areas[i].bsp.child2 = len(areas)
-			areas = append(areas, bspArea{false, false, r2})
+			areas[i].child1 = len(areas)
+			areas = append(areas, bspArea{r1, false, false})
+			areas[i].child2 = len(areas)
+			areas = append(areas, bspArea{r2, false, false})
 		}
 	}
 
@@ -112,18 +112,18 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 
 	// Find deepest leaf going down both branches; place stairs
 	// This represents longest path
-	deepestRoom1 := findDeepestRoomFrom(areas, areas[0].bsp.child1)
+	deepestRoom1 := findDeepestRoomFrom(areas, areas[0].child1)
 	placeInsideRoom(s, deepestRoom1.r, stairsUp)
-	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].bsp.child2)
+	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].child2)
 	placeInsideRoom(s, deepestRoom2.r, stairsDown)
 
 	// Fill rooms
 	for i := range areas {
 		// Skip non-leaves
-		if !areas[i].bsp.IsLeaf() {
+		if !areas[i].IsLeaf() {
 			continue
 		}
-		r := areas[i].bsp.r
+		r := areas[i].r
 		g.rectangleFilled(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, room)
 		s.rectangleUnfilled(r, wall2)
 	}
@@ -131,17 +131,17 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 	// Add doors leading to the closest street in the hierarchy
 	for i := range areas {
 		// Skip non-leaves
-		if !areas[i].bsp.IsLeaf() {
+		if !areas[i].IsLeaf() {
 			continue
 		}
-		r := areas[i].bsp.r
+		r := areas[i].r
 		// Add doors leading to hallways
 		street := areas[i]
 		for {
 			if street.isStreet {
 				break
 			}
-			street = areas[street.bsp.parent]
+			street = areas[street.parent]
 		}
 		for j := 0; j < 4; j++ {
 			if areas[i].isConnected {
@@ -166,7 +166,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				doorPos.x = r.x
 				outsideDoor = vec2{doorPos.x - 1, doorPos.y}
 			}
-			if street.bsp.r.isIn(outsideDoor.x, outsideDoor.y) {
+			if street.r.isIn(outsideDoor.x, outsideDoor.y) {
 				g.setTile(doorPos.x, doorPos.y, room)
 				s.setTile(doorPos.x, doorPos.y, door)
 				areas[i].isConnected = true
@@ -179,17 +179,17 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 	for {
 		numUnconnected := 0
 		for i := range areas {
-			if areas[i].isConnected || areas[i].isStreet || !areas[i].bsp.IsLeaf() {
+			if areas[i].isConnected || areas[i].isStreet || !areas[i].IsLeaf() {
 				continue
 			}
 			numUnconnected++
-			r := areas[i].bsp.r
+			r := areas[i].r
 			// Shrink rectangles by 1 to determine overlap
 			r.w--
 			r.h--
 			overlapSize := 1
 			for j := range areas {
-				if !areas[j].bsp.IsLeaf() {
+				if !areas[j].IsLeaf() {
 					continue
 				}
 				if i == j {
@@ -200,7 +200,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				if !roomOther.isConnected {
 					continue
 				}
-				rOther := roomOther.bsp.r
+				rOther := roomOther.r
 				// Shrink rectangles by 1 to determine overlap
 				rOther.w--
 				rOther.h--
@@ -210,11 +210,11 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				// Rooms are adjacent; pick the cell that's in the middle of the
 				// adjacent area and turn into a door
 				minOverlapX := imin(
-					areas[i].bsp.r.x+areas[i].bsp.r.w, roomOther.bsp.r.x+roomOther.bsp.r.w)
-				maxOverlapX := imax(areas[i].bsp.r.x, roomOther.bsp.r.x)
+					areas[i].r.x+areas[i].r.w, roomOther.r.x+roomOther.r.w)
+				maxOverlapX := imax(areas[i].r.x, roomOther.r.x)
 				minOverlapY := imin(
-					areas[i].bsp.r.y+areas[i].bsp.r.h, roomOther.bsp.r.y+roomOther.bsp.r.h)
-				maxOverlapY := imax(areas[i].bsp.r.y, roomOther.bsp.r.y)
+					areas[i].r.y+areas[i].r.h, roomOther.r.y+roomOther.r.h)
+				maxOverlapY := imax(areas[i].r.y, roomOther.r.y)
 				overlapX := (minOverlapX + maxOverlapX) / 2
 				overlapY := (minOverlapY + maxOverlapY) / 2
 				g.setTile(overlapX, overlapY, room2)
@@ -234,10 +234,10 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		if !areas[i].isStreet {
 			continue
 		}
-		g.rectangleFilled(areas[i].bsp.r, room2)
+		g.rectangleFilled(areas[i].r, room2)
 		// Check ends of street - if next to much older street, block off with wall
-		end1 := vec2{areas[i].bsp.r.x, areas[i].bsp.r.y}
-		end2 := vec2{areas[i].bsp.r.x + areas[i].bsp.r.w - 1, areas[i].bsp.r.y + areas[i].bsp.r.h - 1}
+		end1 := vec2{areas[i].r.x, areas[i].r.y}
+		end2 := vec2{areas[i].r.x + areas[i].r.w - 1, areas[i].r.y + areas[i].r.h - 1}
 		capStreet(g, s, areas, areas[i], end1, areas[i].dAcross(), areas[i].dAlong(), corridorWidth, corridorLevelDiffBlock)
 		capStreet(g, s, areas, areas[i], end2, vec2{-areas[i].dAcross().x, -areas[i].dAcross().y}, vec2{-areas[i].dAlong().x, -areas[i].dAlong().y}, corridorWidth, corridorLevelDiffBlock)
 	}
@@ -253,7 +253,7 @@ func capStreet(g, s *Layer, streets []bspArea, st bspArea, end, dAcross, dAlong 
 		doCap = true
 	} else {
 		for i := range streets {
-			if streets[i].bsp.r.isIn(outside.x, outside.y) && st.bsp.level-streets[i].bsp.level > corridorLevelDiffBlock {
+			if streets[i].r.isIn(outside.x, outside.y) && st.level-streets[i].level > corridorLevelDiffBlock {
 				doCap = true
 				break
 			}
@@ -267,10 +267,10 @@ func capStreet(g, s *Layer, streets []bspArea, st bspArea, end, dAcross, dAlong 
 	}
 }
 
-func findDeepestRoomFrom(areas []bspArea, child int) *bspRoom {
-	var pathStack []bspRoom
-	pathStack = append(pathStack, areas[child].bsp)
-	var deepestChild *bspRoom = nil
+func findDeepestRoomFrom(areas []bspArea, child int) *bspArea {
+	var pathStack []bspArea
+	pathStack = append(pathStack, areas[child])
+	var deepestChild *bspArea = nil
 	maxDepth := 0
 	for len(pathStack) > 0 {
 		r := pathStack[len(pathStack)-1]
@@ -282,10 +282,10 @@ func findDeepestRoomFrom(areas []bspArea, child int) *bspRoom {
 			}
 		}
 		if r.child1 >= 0 {
-			pathStack = append(pathStack, areas[r.child1].bsp)
+			pathStack = append(pathStack, areas[r.child1])
 		}
 		if r.child2 >= 0 {
-			pathStack = append(pathStack, areas[r.child2].bsp)
+			pathStack = append(pathStack, areas[r.child2])
 		}
 	}
 	return deepestChild
