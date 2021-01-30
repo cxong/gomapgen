@@ -26,3 +26,4 @@ _testmain.go
 
 # Export files
 tmx_export/
+__debug_bin

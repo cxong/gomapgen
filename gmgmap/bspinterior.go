@@ -127,6 +127,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 
 		// Add doors leading to hallways
 		// Reuse level attribute for distance from hallway
+		roomLevel := areas[i].level
 		areas[i].level = -1
 		for j := 0; j < 4; j++ {
 			doorPos := vec2{areas[i].r.x + areas[i].r.w/2, areas[i].r.y + areas[i].r.h/2}
@@ -148,8 +149,9 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				doorPos.x = areas[i].r.x
 				outsideDoor = vec2{doorPos.x - 1, doorPos.y}
 			}
+			// Don't connect low level rooms to high level streets
 			for k := range streets {
-				if streets[k].r.isIn(outsideDoor.x, outsideDoor.y) {
+				if streets[k].r.isIn(outsideDoor.x, outsideDoor.y) && streets[k].level-roomLevel >= -2 {
 					g.setTile(doorPos.x, doorPos.y, room)
 					s.setTile(doorPos.x, doorPos.y, door)
 					areas[i].level = 0
