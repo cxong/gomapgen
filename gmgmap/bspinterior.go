@@ -235,7 +235,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			continue
 		}
 		g.rectangleFilled(areas[i].r, room2)
-		// Check ends of street - if next to much older street, block off with wall
+		// Check ends of street - cap or place door
 		end1 := vec2{areas[i].r.x, areas[i].r.y}
 		end2 := vec2{areas[i].r.x + areas[i].r.w - 1, areas[i].r.y + areas[i].r.h - 1}
 		capStreet(g, s, areas, areas[i], end1, areas[i].dAcross(), areas[i].dAlong(), corridorWidth, corridorLevelDiffBlock)
@@ -248,22 +248,28 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 func capStreet(g, s *Layer, streets []bspArea, st bspArea, end, dAcross, dAlong vec2, corridorWidth, corridorLevelDiffBlock int) {
 	// Check ends of street - if outside map, or next to much older street, block off with wall
 	outside := vec2{end.x - dAlong.x, end.y - dAlong.y}
-	doCap := false
+	capTile := floor
+	capStructure := nothing
 	if !g.isIn(outside.x, outside.y) {
-		doCap = true
+		capTile = nothing
+		capStructure = wall2
 	} else {
 		for i := range streets {
-			if streets[i].r.isIn(outside.x, outside.y) && st.level-streets[i].level > corridorLevelDiffBlock {
-				doCap = true
+			if streets[i].r.isIn(outside.x, outside.y) {
+				if st.level-streets[i].level > corridorLevelDiffBlock {
+					capTile = nothing
+					capStructure = wall2
+				} else {
+					capTile = room2
+					capStructure = door
+				}
 				break
 			}
 		}
 	}
-	if doCap {
-		for i := 0; i < corridorWidth; i++ {
-			g.setTile(end.x+dAcross.x*i, end.y+dAcross.y*i, nothing)
-			s.setTile(end.x+dAcross.x*i, end.y+dAcross.y*i, wall2)
-		}
+	for i := 0; i < corridorWidth; i++ {
+		g.setTile(end.x+dAcross.x*i, end.y+dAcross.y*i, capTile)
+		s.setTile(end.x+dAcross.x*i, end.y+dAcross.y*i, capStructure)
 	}
 }
 
