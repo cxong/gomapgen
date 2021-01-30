@@ -33,6 +33,7 @@ const (
 	room       = '.'
 	room2      = '#'
 	door       = '+'
+	doorLocked = 'x'
 	stairsUp   = '<'
 	stairsDown = '>'
 	tree       = 'T'

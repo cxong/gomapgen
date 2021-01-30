@@ -32,16 +32,18 @@ type TMXTemplate struct {
 	// then isolated tile
 	floorIDs [16]string
 	//floor2IDs  [16]string
-	roadIDs    [16]string
-	road2IDs   [16]string
-	wallIDs    [16]string
-	wall2IDs   [16]string
-	roomIDs    [16]string
-	room2IDs   [16]string
-	doorH      string
-	doorV      string
-	stairsUp   string
-	stairsDown string
+	roadIDs     [16]string
+	road2IDs    [16]string
+	wallIDs     [16]string
+	wall2IDs    [16]string
+	roomIDs     [16]string
+	room2IDs    [16]string
+	doorH       string
+	doorV       string
+	doorLockedH string
+	doorLockedV string
+	stairsUp    string
+	stairsDown  string
 	// note: trees use different tiling system
 	// centre
 	// 8 tiles from top clockwise
