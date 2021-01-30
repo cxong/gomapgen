@@ -111,6 +111,14 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
+
+	// Find deepest leaf going down both branches; place stairs
+	// This represents longest path
+	deepestRoom1 := findDeepestRoomFrom(areas, areas[0].child1)
+	placeInsideRoom(s, deepestRoom1.r, stairsUp)
+	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].child2)
+	placeInsideRoom(s, deepestRoom2.r, stairsDown)
+
 	for i := range areas {
 		// Skip non-leaves
 		if !areas[i].IsLeaf() {
@@ -229,12 +237,6 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		capStreet(g, s, streets, streets[i], end2, vec2{-streets[i].dAcross().x, -streets[i].dAcross().y}, vec2{-streets[i].dAlong().x, -streets[i].dAlong().y}, corridorWidth, corridorLevelDiffBlock)
 	}
 
-	// Place stairs going up at end of first (main) street
-	s.setTile(streets[0].r.x+streets[0].dAlong().x, streets[0].r.y+streets[0].dAlong().y, stairsUp)
-	// Place stairs going down in last room
-	lastRoomRect := areas[len(areas)-1].r
-	s.setTile(lastRoomRect.x+lastRoomRect.w/2, lastRoomRect.y+lastRoomRect.h/2, stairsDown)
-
 	return m
 }
 
@@ -258,4 +260,32 @@ func capStreet(g, s *Layer, streets []street, st street, end, dAcross, dAlong ve
 			s.setTile(end.x+dAcross.x*i, end.y+dAcross.y*i, wall2)
 		}
 	}
+}
+
+func findDeepestRoomFrom(areas []bspRoom, child int) *bspRoom {
+	var pathStack []bspRoom
+	pathStack = append(pathStack, areas[child])
+	var deepestChild *bspRoom = nil
+	maxDepth := 0
+	for len(pathStack) > 0 {
+		r := pathStack[len(pathStack)-1]
+		pathStack = pathStack[:len(pathStack)-1]
+		if r.IsLeaf() {
+			if r.level > maxDepth {
+				maxDepth = r.level
+				deepestChild = &r
+			}
+		}
+		if r.child1 >= 0 {
+			pathStack = append(pathStack, areas[r.child1])
+		}
+		if r.child2 >= 0 {
+			pathStack = append(pathStack, areas[r.child2])
+		}
+	}
+	return deepestChild
+}
+
+func placeInsideRoom(s *Layer, r rect, t rune) {
+	s.setTile(r.x+r.w/2, r.y+r.h/2, t)
 }
