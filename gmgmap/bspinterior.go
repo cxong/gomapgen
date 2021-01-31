@@ -130,29 +130,6 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
 
-	// Find deepest leaf going down both branches; place stairs
-	// This represents longest path
-	deepestRoom1 := findDeepestRoomFrom(areas, areas[0].child1)
-	placeInsideRoom(s, areas[deepestRoom1].r, stairsUp)
-	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].child2)
-	placeInsideRoom(s, areas[deepestRoom2].r, stairsDown)
-	markParentStreets := func(area *bspArea) {
-		street := area
-		street.isOnCriticalPath = true
-		for {
-			if street.isStreet {
-				street.isOnCriticalPath = true
-			}
-			street = &areas[street.parent]
-			if street == &areas[0] {
-				break
-			}
-		}
-		street.isOnCriticalPath = true
-	}
-	markParentStreets(&areas[deepestRoom1])
-	markParentStreets(&areas[deepestRoom2])
-
 	// Fill rooms
 	for i := range areas {
 		// Skip non-leaves
@@ -218,6 +195,8 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				s.setTile(doorPos.x, doorPos.y, door)
 				areas[i].isConnected = true
 				adjacency.Connect(i, streetI)
+				// Change parentage
+				areas[i].parent = streetI
 				break
 			}
 		}
@@ -273,6 +252,8 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 					roomOther.isOnCriticalPath = true
 				}
 				adjacency.Connect(i, j)
+				// Change parentage
+				areas[i].parent = j
 				numUnconnected--
 				break
 			}
@@ -281,6 +262,27 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			break
 		}
 	}
+
+	// Find deepest leaf going down both branches; place stairs
+	// This represents longest/critical path
+	deepestRoom1 := findDeepestRoomFrom(areas, areas[0].child1)
+	placeInsideRoom(s, areas[deepestRoom1].r, stairsUp)
+	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].child2)
+	placeInsideRoom(s, areas[deepestRoom2].r, stairsDown)
+	markParentStreets := func(area *bspArea) {
+		street := area
+		street.isOnCriticalPath = true
+		for {
+			street.isOnCriticalPath = true
+			street = &areas[street.parent]
+			if street == &areas[0] {
+				break
+			}
+		}
+		street.isOnCriticalPath = true
+	}
+	markParentStreets(&areas[deepestRoom1])
+	markParentStreets(&areas[deepestRoom2])
 
 	// Fill streets
 	for i := range areas {
