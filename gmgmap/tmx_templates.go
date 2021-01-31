@@ -43,6 +43,8 @@ var DawnLikeTemplate = TMXTemplate{
 	[]string{"2393", "2394", "2395", "2396", "2397", "2398", "2399", "2400", "2401", "2402", "2403", "2404", "2405", "2406", "2407", "2408", "2409", "2410", "2424", "2425", "2426", "2427", "2428", "2429", "2430", "2431"},
 	// Flowers
 	[]string{"2328", "2329", "2330", "2331", "2332", "2333", "2334", "2335"},
+	// Keys
+	[]string{"4640", "4641"},
 	0, 0, []csvExport{}}
 
 // KenneyTemplate - using Kenney's roguelike/RPG pack
@@ -87,4 +89,6 @@ var KenneyTemplate = TMXTemplate{
 	[]string{"2614", "2615", "2668", "2669", "2722", "2723", "2776", "2777", "2830", "2831"}, // Players
 	// Flowers
 	[]string{"542", "543", "544", "545"},
+	// Keys
+	[]string{"2446"}, // TODO: no keys in template
 	0, 0, []csvExport{}}

@@ -51,10 +51,11 @@ const (
 	table      = 't'
 	chair      = 'c'
 	rug        = '~'
-	pot        = '('
+	pot        = '{'
 	assistant  = 'a'
 	player     = '@'
 	flower     = 'v'
+	key        = '('
 )
 
 // NewMap - create a new Map for a certain size
@@ -287,6 +288,11 @@ func (l Layer) countTiles(x, y, r int, tile rune) int {
 // IsWall - whether a tile is a wall type
 func IsWall(tile rune) bool {
 	return tile == wall || tile == wall2
+}
+
+// IsDoor - whether a tile is a door type
+func IsDoor(tile rune) bool {
+	return tile == door || tile == doorLocked
 }
 
 // Add a corridor with two turns

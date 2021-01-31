@@ -71,6 +71,7 @@ type TMXTemplate struct {
 	assistantIDs  []string
 	playerIDs     []string
 	flowerIDs     []string
+	keyIDs        []string
 
 	// Parameters used for template export
 	Width  int
@@ -183,7 +184,7 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 					if x > 0 {
 						left = wallLayer.getTile(x-1, y)
 					}
-					if IsWall(left) {
+					if IsWall(left) || IsDoor(left) {
 						xt[x+y*l.Width] = tmp.doorH
 					} else {
 						xt[x+y*l.Width] = tmp.doorV
@@ -193,7 +194,7 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 					if x > 0 {
 						left = wallLayer.getTile(x-1, y)
 					}
-					if IsWall(left) {
+					if IsWall(left) || IsDoor(left) {
 						xt[x+y*l.Width] = tmp.doorLockedH
 					} else {
 						xt[x+y*l.Width] = tmp.doorLockedV
@@ -261,6 +262,8 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 					xt[x+y*l.Width] = tmp.playerIDs[rand.Intn(len(tmp.playerIDs))]
 				case flower:
 					xt[x+y*l.Width] = tmp.flowerIDs[rand.Intn(len(tmp.flowerIDs))]
+				case key:
+					xt[x+y*l.Width] = tmp.keyIDs[rand.Intn(len(tmp.keyIDs))]
 				default:
 					fmt.Println("Unhandled tile", tile)
 					panic(tile)

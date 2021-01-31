@@ -325,16 +325,52 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			break
 		}
 	}
-	// Place characters in rooms depending on their distance from critical path
+
 	c := m.Layer("Characters")
+
+	// For each locked street (street on critical path), place a key in a non-critical leaf
+	// Do so by following a child away from the critical path
+	for i := range areas {
+		if !areas[i].isStreet || !areas[i].isOnCriticalPath || i == 0 {
+			continue
+		}
+		child := i
+		for {
+			nextChild := -1
+			for j := range areas {
+				if child == j || !adjacency.IsConnected(child, j) || dCriticalPath[j] <= dCriticalPath[child] {
+					continue
+				}
+				nextChild = j
+				break
+			}
+			if nextChild == -1 {
+				break
+			}
+			if child == nextChild {
+				panic("child == nexcChild")
+			}
+			child = nextChild
+		}
+		if child == -1 {
+			panic("Cannot find child for locked street")
+		} else {
+			r := rect{areas[child].r.x + 1, areas[child].r.y + 1, areas[child].r.w - 2, areas[child].r.h - 2}
+			c.setTileInAreaIfEmpty(r, key)
+		}
+	}
+
+	// Place characters in rooms depending on their distance from critical path
 	for i := range areas {
 		for j := 0; j < dCriticalPath[i]-1; j++ {
 			if !areas[i].isStreet && !areas[i].IsLeaf() {
 				panic("trying to place character in non-leaf room")
 			}
-			r := areas[i].r
+			var r rect
 			if !areas[i].isStreet {
 				r = rect{areas[i].r.x + 1, areas[i].r.y + 1, areas[i].r.w - 2, areas[i].r.h - 2}
+			} else {
+				r = rect{areas[i].r.x + areas[i].dAlong().x, areas[i].r.y + areas[i].dAlong().y, areas[i].r.w - 2*areas[i].dAlong().x, areas[i].r.h - 2*areas[i].dAlong().y}
 			}
 			c.setTileInAreaIfEmpty(r, player)
 		}
