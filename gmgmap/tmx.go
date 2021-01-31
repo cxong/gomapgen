@@ -188,6 +188,16 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 					} else {
 						xt[x+y*l.Width] = tmp.doorV
 					}
+				case doorLocked:
+					left := wall
+					if x > 0 {
+						left = wallLayer.getTile(x-1, y)
+					}
+					if IsWall(left) {
+						xt[x+y*l.Width] = tmp.doorLockedH
+					} else {
+						xt[x+y*l.Width] = tmp.doorLockedV
+					}
 				case stairsUp:
 					xt[x+y*l.Width] = tmp.stairsUp
 				case stairsDown:

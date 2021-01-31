@@ -6,8 +6,9 @@ import (
 
 type bspArea struct {
 	bspRoom
-	isStreet    bool
-	isConnected bool
+	isStreet         bool
+	isConnected      bool
+	isOnCriticalPath bool
 }
 
 func (s bspArea) dAlong() vec2 {
@@ -33,7 +34,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 
 	// Split the map for a number of iterations, choosing alternating axis and random location
 	hcount := rand.Intn(2)
-	areas = append(areas, bspArea{bspRoomRoot(width, height), false, false})
+	areas = append(areas, bspArea{bspRoomRoot(width, height), false, false, false})
 	for i := 0; i < len(areas); i++ {
 		if areas[i].level == splits {
 			break
@@ -75,9 +76,9 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			}
 			areas[i].horizontal = !horizontal
 			areas[i].child1 = len(areas)
-			areas = append(areas, bspArea{r1, false, false})
+			areas = append(areas, bspArea{r1, false, false, false})
 			areas[i].child2 = len(areas)
-			areas = append(areas, bspArea{r2, false, false})
+			areas = append(areas, bspArea{r2, false, false, false})
 		}
 	}
 	// Try to split leaf rooms into more rooms, by longest axis
@@ -101,9 +102,9 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				r1.r.h++
 			}
 			areas[i].child1 = len(areas)
-			areas = append(areas, bspArea{r1, false, false})
+			areas = append(areas, bspArea{r1, false, false, false})
 			areas[i].child2 = len(areas)
-			areas = append(areas, bspArea{r2, false, false})
+			areas = append(areas, bspArea{r2, false, false, false})
 		}
 	}
 
@@ -116,6 +117,20 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 	placeInsideRoom(s, deepestRoom1.r, stairsUp)
 	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].child2)
 	placeInsideRoom(s, deepestRoom2.r, stairsDown)
+	markParentStreets := func(area *bspArea) {
+		street := area
+		for {
+			if street.isStreet {
+				street.isOnCriticalPath = true
+			}
+			street = &areas[street.parent]
+			if street == &areas[0] {
+				break
+			}
+		}
+	}
+	markParentStreets(deepestRoom1)
+	markParentStreets(deepestRoom2)
 
 	// Fill rooms
 	for i := range areas {
@@ -261,7 +276,11 @@ func capStreet(g, s *Layer, streets []bspArea, st bspArea, end, dAcross, dAlong 
 					capStructure = wall2
 				} else {
 					capTile = room2
-					capStructure = door
+					if st.isOnCriticalPath {
+						capStructure = doorLocked
+					} else {
+						capStructure = door
+					}
 				}
 				break
 			}
