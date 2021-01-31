@@ -15,14 +15,7 @@ type building struct {
 
 func (b building) addNPC(c *Layer) {
 	// Try to place a random NPC somewhere inside the building
-	for i := 0; i < 100; i++ {
-		x := rand.Intn(b.r.w-2) + b.r.x + 1
-		y := rand.Intn(b.r.h-2) + b.r.y + 1
-		if c.getTile(x, y) == nothing {
-			c.setTile(x, y, player)
-			break
-		}
-	}
+	c.setTileInAreaIfEmpty(rect{b.r.x + 1, b.r.y + 1, b.r.w - 2, b.r.h - 2}, player)
 }
 
 // NewVillage - create a village, made up of multiple buildings

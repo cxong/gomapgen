@@ -2,6 +2,7 @@ package gmgmap
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/beefsack/go-astar"
 )
@@ -103,6 +104,17 @@ func (l Layer) getTile(x, y int) rune {
 
 func (l *Layer) setTile(x, y int, tile rune) {
 	l.Tiles[x+y*l.Width] = tile
+}
+
+func (l *Layer) setTileInAreaIfEmpty(r rect, tile rune) {
+	for i := 0; i < 100; i++ {
+		x := rand.Intn(r.w) + r.x
+		y := rand.Intn(r.h) + r.y
+		if l.getTile(x, y) == nothing {
+			l.setTile(x, y, tile)
+			break
+		}
+	}
 }
 
 func (l Layer) isIn(x, y int) bool {

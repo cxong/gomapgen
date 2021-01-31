@@ -25,6 +25,25 @@ func (s bspArea) dAcross() vec2 {
 	return vec2{1, 0}
 }
 
+type adjacencyMatrix [][]bool
+
+func newAdjacencyMatrix(x int) adjacencyMatrix {
+	a := make([][]bool, x)
+	for i := 0; i < x; i++ {
+		a[i] = make([]bool, x)
+	}
+	return a
+}
+
+func (a adjacencyMatrix) Connect(i, j int) {
+	a[i][j] = true
+	a[j][i] = true
+}
+
+func (a adjacencyMatrix) IsConnected(i, j int) bool {
+	return a[i][j]
+}
+
 // NewBSPInterior - Create new BSP interior map
 // Implementation of https://gamedev.stackexchange.com/questions/47917/procedural-house-with-rooms-generator/48216#48216
 func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map {
@@ -114,11 +133,12 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 	// Find deepest leaf going down both branches; place stairs
 	// This represents longest path
 	deepestRoom1 := findDeepestRoomFrom(areas, areas[0].child1)
-	placeInsideRoom(s, deepestRoom1.r, stairsUp)
+	placeInsideRoom(s, areas[deepestRoom1].r, stairsUp)
 	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].child2)
-	placeInsideRoom(s, deepestRoom2.r, stairsDown)
+	placeInsideRoom(s, areas[deepestRoom2].r, stairsDown)
 	markParentStreets := func(area *bspArea) {
 		street := area
+		street.isOnCriticalPath = true
 		for {
 			if street.isStreet {
 				street.isOnCriticalPath = true
@@ -128,9 +148,10 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				break
 			}
 		}
+		street.isOnCriticalPath = true
 	}
-	markParentStreets(deepestRoom1)
-	markParentStreets(deepestRoom2)
+	markParentStreets(&areas[deepestRoom1])
+	markParentStreets(&areas[deepestRoom2])
 
 	// Fill rooms
 	for i := range areas {
@@ -143,25 +164,36 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		s.rectangleUnfilled(r, wall2)
 	}
 
+	// Set up adjacency matrix
+	adjacency := newAdjacencyMatrix(len(areas))
+	for i := range areas {
+		if !areas[i].isStreet || areas[i].parent < 0 {
+			continue
+		}
+		adjacency.Connect(i, areas[i].parent)
+	}
+
 	// Add doors leading to the closest street in the hierarchy
 	for i := range areas {
 		// Skip non-leaves
 		if !areas[i].IsLeaf() {
 			continue
 		}
+		if areas[i].isConnected {
+			break
+		}
 		r := areas[i].r
 		// Add doors leading to hallways
 		street := areas[i]
+		streetI := i
 		for {
 			if street.isStreet {
 				break
 			}
-			street = areas[street.parent]
+			streetI = street.parent
+			street = areas[streetI]
 		}
 		for j := 0; j < 4; j++ {
-			if areas[i].isConnected {
-				break
-			}
 			doorPos := vec2{r.x + r.w/2, r.y + r.h/2}
 			var outsideDoor vec2
 			if j == 0 {
@@ -185,6 +217,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				g.setTile(doorPos.x, doorPos.y, room)
 				s.setTile(doorPos.x, doorPos.y, door)
 				areas[i].isConnected = true
+				adjacency.Connect(i, streetI)
 				break
 			}
 		}
@@ -235,6 +268,11 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				g.setTile(overlapX, overlapY, room2)
 				s.setTile(overlapX, overlapY, door)
 				areas[i].isConnected = true
+				if areas[i].isOnCriticalPath || roomOther.isOnCriticalPath {
+					areas[i].isOnCriticalPath = true
+					roomOther.isOnCriticalPath = true
+				}
+				adjacency.Connect(i, j)
 				numUnconnected--
 				break
 			}
@@ -255,6 +293,49 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		end2 := vec2{areas[i].r.x + areas[i].r.w - 1, areas[i].r.y + areas[i].r.h - 1}
 		capStreet(g, s, areas, areas[i], end1, areas[i].dAcross(), areas[i].dAlong(), corridorWidth, corridorLevelDiffBlock)
 		capStreet(g, s, areas, areas[i], end2, vec2{-areas[i].dAcross().x, -areas[i].dAcross().y}, vec2{-areas[i].dAlong().x, -areas[i].dAlong().y}, corridorWidth, corridorLevelDiffBlock)
+	}
+
+	// Use adjacency matrix to determine distance of all leaf nodes from critical path
+	dCriticalPath := make([]int, len(areas))
+	for i := range areas {
+		if areas[i].isOnCriticalPath {
+			dCriticalPath[i] = 1
+		}
+	}
+	for {
+		newConnections := 0
+		for i := range areas {
+			if dCriticalPath[i] > 0 {
+				continue
+			}
+			if !areas[i].isStreet && !areas[i].IsLeaf() {
+				continue
+			}
+			for j := range areas {
+				if adjacency.IsConnected(i, j) && dCriticalPath[j] > 0 {
+					dCriticalPath[i] = dCriticalPath[j] + 1
+					newConnections++
+					break
+				}
+			}
+		}
+		if newConnections == 0 {
+			break
+		}
+	}
+	// Place characters in rooms depending on their distance from critical path
+	c := m.Layer("Characters")
+	for i := range areas {
+		for j := 0; j < dCriticalPath[i]-1; j++ {
+			if !areas[i].isStreet && !areas[i].IsLeaf() {
+				panic("trying to place character in non-leaf room")
+			}
+			r := areas[i].r
+			if !areas[i].isStreet {
+				r = rect{areas[i].r.x + 1, areas[i].r.y + 1, areas[i].r.w - 2, areas[i].r.h - 2}
+			}
+			c.setTileInAreaIfEmpty(r, player)
+		}
 	}
 
 	return m
@@ -292,25 +373,26 @@ func capStreet(g, s *Layer, streets []bspArea, st bspArea, end, dAcross, dAlong 
 	}
 }
 
-func findDeepestRoomFrom(areas []bspArea, child int) *bspArea {
-	var pathStack []bspArea
-	pathStack = append(pathStack, areas[child])
-	var deepestChild *bspArea = nil
+func findDeepestRoomFrom(areas []bspArea, child int) int {
+	var pathStack []int
+	pathStack = append(pathStack, child)
+	deepestChild := -1
 	maxDepth := 0
 	for len(pathStack) > 0 {
-		r := pathStack[len(pathStack)-1]
+		i := pathStack[len(pathStack)-1]
+		r := areas[i]
 		pathStack = pathStack[:len(pathStack)-1]
 		if r.IsLeaf() {
 			if r.level > maxDepth {
 				maxDepth = r.level
-				deepestChild = &r
+				deepestChild = i
 			}
 		}
 		if r.child1 >= 0 {
-			pathStack = append(pathStack, areas[r.child1])
+			pathStack = append(pathStack, r.child1)
 		}
 		if r.child2 >= 0 {
-			pathStack = append(pathStack, areas[r.child2])
+			pathStack = append(pathStack, r.child2)
 		}
 	}
 	return deepestChild
