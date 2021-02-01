@@ -56,7 +56,7 @@ See `main.go` for all the options.
 
 ![shop](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/shop.gif)
 
-## --algo=bspinterior
+## --algo=bspinterior --corridorWidth=2
 
 ![bspinterior](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/bspinterior.gif)
 
