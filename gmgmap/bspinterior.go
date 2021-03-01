@@ -247,10 +247,6 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				g.setTile(overlapX, overlapY, room2)
 				s.setTile(overlapX, overlapY, door)
 				areas[i].isConnected = true
-				if areas[i].isOnCriticalPath || roomOther.isOnCriticalPath {
-					areas[i].isOnCriticalPath = true
-					roomOther.isOnCriticalPath = true
-				}
 				adjacency.Connect(i, j)
 				// Change parentage
 				areas[i].parent = j
@@ -271,7 +267,6 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 	placeInsideRoom(s, areas[deepestRoom2].r, stairsDown)
 	markParentStreets := func(area *bspArea) {
 		street := area
-		street.isOnCriticalPath = true
 		for {
 			street.isOnCriticalPath = true
 			street = &areas[street.parent]
@@ -348,7 +343,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 				break
 			}
 			if child == nextChild {
-				panic("child == nexcChild")
+				panic("child == nextChild")
 			}
 			child = nextChild
 		}
