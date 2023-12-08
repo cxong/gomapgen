@@ -10,7 +10,7 @@ type connectInfo struct {
 }
 
 // NewRogue - generate a new Rogue-like map, with rooms connected with tunnels
-func NewRogue(width, height,
+func NewRogue(rr *rand.Rand, width, height,
 	gridWidth, gridHeight, minRoomPct, maxRoomPct int) *Map {
 	m := NewMap(width, height)
 
@@ -19,7 +19,7 @@ func NewRogue(width, height,
 	connected := make([]connectInfo, totalGrids)
 
 	// Pick random grid to start with
-	gridIndex := rand.Intn(len(connected))
+	gridIndex := rr.Intn(len(connected))
 	firstRoomIndex := gridIndex
 	var lastRoomIndex int
 	grid := rect{gridIndex % gridWidth, gridIndex / gridWidth,
@@ -46,7 +46,7 @@ func NewRogue(width, height,
 		}
 		// Otherwise, connect to a random unconnected neighbour
 		for {
-			neighbourX, neighbourY := randomWalk(grid.x, grid.y, gridWidth, gridHeight)
+			neighbourX, neighbourY := randomWalk(rr, grid.x, grid.y, gridWidth, gridHeight)
 			neighbourIndex := neighbourX + neighbourY*gridWidth
 			if !tryConnect(connected, grid.x, grid.y, neighbourX, neighbourY,
 				gridIndex, neighbourIndex) {
@@ -80,7 +80,7 @@ func NewRogue(width, height,
 				}
 				// Try connecting to a random connected neighbour
 				for {
-					neighbourX, neighbourY := randomWalk(grid.x, grid.y, gridWidth, gridHeight)
+					neighbourX, neighbourY := randomWalk(rr, grid.x, grid.y, gridWidth, gridHeight)
 					neighbourIndex := neighbourX + neighbourY*gridWidth
 					if !connected[neighbourIndex].isConnected() {
 						continue
@@ -101,10 +101,10 @@ func NewRogue(width, height,
 	}
 
 	// Make some random connections
-	extraConnections := rand.Intn(gridWidth)
+	extraConnections := rr.Intn(gridWidth)
 	for i := 0; i < extraConnections; i++ {
 		for {
-			gridIndex = rand.Intn(len(connected))
+			gridIndex = rr.Intn(len(connected))
 			grid.x = gridIndex % gridWidth
 			grid.y = gridIndex / gridWidth
 			if connected[gridIndex].allConnected() {
@@ -112,7 +112,7 @@ func NewRogue(width, height,
 			}
 			// Try connecting to a random neighbour
 			for {
-				neighbourX, neighbourY := randomWalk(grid.x, grid.y, gridWidth, gridHeight)
+				neighbourX, neighbourY := randomWalk(rr, grid.x, grid.y, gridWidth, gridHeight)
 				neighbourIndex := neighbourX + neighbourY*gridWidth
 				if tryConnect(connected, grid.x, grid.y, neighbourX, neighbourY,
 					gridIndex, neighbourIndex) {
@@ -127,8 +127,8 @@ func NewRogue(width, height,
 	s := m.Layer("Structures")
 
 	// Try to place rooms - one for each grid
-	numRooms := (rand.Intn(maxRoomPct-minRoomPct) + minRoomPct) * totalGrids / 100
-	roomIndices := rand.Perm(totalGrids)
+	numRooms := (rr.Intn(maxRoomPct-minRoomPct) + minRoomPct) * totalGrids / 100
+	roomIndices := rr.Perm(totalGrids)
 	rooms := make([]rect, totalGrids)
 	gridWidthTiles := width / gridWidth
 	gridHeightTiles := height / gridHeight
@@ -144,16 +144,16 @@ func NewRogue(width, height,
 		if i < numRooms || numConnections <= 1 ||
 			roomIndices[i] == firstRoomIndex || roomIndices[i] == lastRoomIndex {
 			// Generate random room
-			roomRect.w = rand.Intn(gridWidthTiles-4) + 4
-			roomRect.h = rand.Intn(gridHeightTiles-4) + 4
+			roomRect.w = rr.Intn(gridWidthTiles-4) + 4
+			roomRect.h = rr.Intn(gridHeightTiles-4) + 4
 		} else {
 			// Generate "gone rooms"
 			roomRect.w = 1
 			roomRect.h = 1
 		}
 		// Place the room
-		roomRect.x = rand.Intn(width/gridWidth-roomRect.w) + gridStartX
-		roomRect.y = rand.Intn(height/gridHeight-roomRect.h) + gridStartY
+		roomRect.x = rr.Intn(width/gridWidth-roomRect.w) + gridStartX
+		roomRect.y = rr.Intn(height/gridHeight-roomRect.h) + gridStartY
 		for x := roomRect.x; x < roomRect.x+roomRect.w; x++ {
 			for y := roomRect.y; y < roomRect.y+roomRect.h; y++ {
 				if roomRect.w > 1 &&

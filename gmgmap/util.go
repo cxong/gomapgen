@@ -34,10 +34,10 @@ func (r rect) isIn(x, y int) bool {
 	return x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h
 }
 
-func randomWalk(x, y, w, h int) (int, int) {
+func randomWalk(rr *rand.Rand, x, y, w, h int) (int, int) {
 	for {
 		// Choose random direction, up/right/down/left
-		switch rand.Intn(4) {
+		switch rr.Intn(4) {
 		case 0:
 			// up
 			if y > 0 {
@@ -87,11 +87,11 @@ func iclamp(v, min, max int) int {
 	}
 }
 
-func irand(min, max int) int {
+func irand(rr *rand.Rand, min, max int) int {
 	if min == max {
 		return min
 	}
-	return rand.Intn(max-min) + min
+	return rr.Intn(max-min) + min
 }
 
 type bspRoom struct {
@@ -106,24 +106,24 @@ func bspRoomRoot(width, height int) bspRoom {
 	return bspRoom{rect{0, 0, width, height}, -1, -1, -1, 0, false}
 }
 
-func (room *bspRoom) Split(i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom, error) {
+func (room *bspRoom) Split(rr *rand.Rand, i, minRoomSize, maxRoomSize int) (bspRoom, bspRoom, error) {
 	// If the room is too small, then don't split
 	if room.r.w-minRoomSize*2 < 0 && room.r.h-minRoomSize < 0 {
 		return bspRoom{}, bspRoom{}, errors.New("room too small")
 	}
 	// If the room is small enough already, consider not splitting
-	if room.r.w <= maxRoomSize && room.r.h <= maxRoomSize && rand.Intn(2) == 0 {
+	if room.r.w <= maxRoomSize && room.r.h <= maxRoomSize && rr.Intn(2) == 0 {
 		return bspRoom{}, bspRoom{}, errors.New("room is small enough")
 	}
 	// If more than 2:1, split the long dimension, otherwise randomise
-	if room.r.w*2 > room.r.h || (room.r.h*2 < room.r.w && rand.Intn(2) == 0) {
-		return room.SplitHorizontal(i, minRoomSize)
+	if room.r.w*2 > room.r.h || (room.r.h*2 < room.r.w && rr.Intn(2) == 0) {
+		return room.SplitHorizontal(rr, i, minRoomSize)
 	}
-	return room.SplitVertical(i, minRoomSize)
+	return room.SplitVertical(rr, i, minRoomSize)
 }
 
 // Split rooms horizontally (left + right children)
-func (room *bspRoom) SplitHorizontal(i, minRoomSize int) (bspRoom, bspRoom, error) {
+func (room *bspRoom) SplitHorizontal(rr *rand.Rand, i, minRoomSize int) (bspRoom, bspRoom, error) {
 	r := room.r.w - minRoomSize*2
 	var x int
 	if r < 0 {
@@ -131,7 +131,7 @@ func (room *bspRoom) SplitHorizontal(i, minRoomSize int) (bspRoom, bspRoom, erro
 	} else if r == 0 {
 		x = minRoomSize
 	} else {
-		x = rand.Intn(r) + minRoomSize
+		x = rr.Intn(r) + minRoomSize
 	}
 	return bspRoom{rect{room.r.x, room.r.y, x, room.r.h}, i, -1, -1, room.level + 1, true},
 		bspRoom{rect{room.r.x + x, room.r.y, room.r.w - x, room.r.h}, i, -1, -1, room.level + 1, true},
@@ -139,7 +139,7 @@ func (room *bspRoom) SplitHorizontal(i, minRoomSize int) (bspRoom, bspRoom, erro
 }
 
 // Split rooms horizontally (top + bottom children)
-func (room *bspRoom) SplitVertical(i, minRoomSize int) (bspRoom, bspRoom, error) {
+func (room *bspRoom) SplitVertical(rr *rand.Rand, i, minRoomSize int) (bspRoom, bspRoom, error) {
 	r := room.r.h - minRoomSize*2
 	var y int
 	if r < 0 {
@@ -147,7 +147,7 @@ func (room *bspRoom) SplitVertical(i, minRoomSize int) (bspRoom, bspRoom, error)
 	} else if r == 0 {
 		y = minRoomSize
 	} else {
-		y = rand.Intn(r) + minRoomSize
+		y = rr.Intn(r) + minRoomSize
 	}
 	return bspRoom{rect{room.r.x, room.r.y, room.r.w, y}, i, -1, -1, room.level + 1, false},
 		bspRoom{rect{room.r.x, room.r.y + y, room.r.w, room.r.h - y}, i, -1, -1, room.level + 1, false},

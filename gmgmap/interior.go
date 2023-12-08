@@ -15,7 +15,7 @@ const (
 // The layout has a "lobby", multiple rooms that all connect to the lobby.
 // Idea taken from http://www.redactedgame.com/?p=106
 // TODO: improve connectedness of leaf nodes, to make it less tree-like
-func NewInterior(width, height, minRoomSize, maxRoomSize,
+func NewInterior(rr *rand.Rand, width, height, minRoomSize, maxRoomSize,
 	lobbyEdge int) *Map {
 	m := NewMap(width, height)
 
@@ -28,7 +28,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 	var rooms []bspRoom
 	rooms = append(rooms, bspRoomRoot(width, height))
 	for i := 0; i < len(rooms); i++ {
-		if r1, r2, err := rooms[i].Split(i, minRoomSize, maxRoomSize); err == nil {
+		if r1, r2, err := rooms[i].Split(rr, i, minRoomSize, maxRoomSize); err == nil {
 			rooms[i].child1 = len(rooms)
 			rooms = append(rooms, r1)
 			rooms[i].child2 = len(rooms)
@@ -68,7 +68,7 @@ func NewInterior(width, height, minRoomSize, maxRoomSize,
 
 	// Choose one of the rooms to be the lobby
 	var lobby bspRoom
-	var roomIndices = rand.Perm(len(rooms))
+	var roomIndices = rr.Perm(len(rooms))
 	for i := 0; i < len(roomIndices); i++ {
 		lobby = rooms[roomIndices[i]]
 		// Check if the lobby placement is ok;

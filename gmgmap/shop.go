@@ -21,7 +21,7 @@ import "math/rand"
 // - against walls (display items, pots, barrels, leave diagonals free)
 // - assistants (1 per 100 tiles, after the first)
 // - patrons (1 per 36 tiles)
-func NewShop(width, height int) *Map {
+func NewShop(rr *rand.Rand, width, height int) *Map {
 	m := NewMap(width, height)
 
 	// Grass with road surroundings
@@ -60,7 +60,7 @@ func NewShop(width, height int) *Map {
 	}
 
 	// Counter - place opposite the door, random width (at least 2)
-	counterW := rand.Intn(f.Width-4-2) + 2
+	counterW := rr.Intn(f.Width-4-2) + 2
 	counterX := entranceX - counterW/2
 	counterY := 3
 	for x := counterX; x < counterX+counterW; x++ {
@@ -72,7 +72,7 @@ func NewShop(width, height int) *Map {
 
 	// Shelf area - to the right, at least 3 wide
 	// Note: use two rands to get a distribution near the middle
-	shelfX := rand.Intn(f.Width-7)/2 + (rand.Intn(f.Width-7)+1)/2 + 2
+	shelfX := rr.Intn(f.Width-7)/2 + (rr.Intn(f.Width-7)+1)/2 + 2
 	shelfW := f.Width - 2 - shelfX
 	// If wider than 5, leave at least 3 free to the left for rest area
 	if shelfW > 5 && shelfX < 5 {
@@ -98,7 +98,7 @@ func NewShop(width, height int) *Map {
 			if shelfClear(x, y) && rowCounter < 3 && x != entranceX {
 				f.setTile(x, y, shelf)
 				// Randomly place items on them
-				if rand.Intn(3) < 2 {
+				if rr.Intn(3) < 2 {
 					v.setTile(x, y, stock)
 				}
 				rowCounter++
@@ -118,8 +118,8 @@ func NewShop(width, height int) *Map {
 		// Randomly place tables from the wall to shelfX
 		restArea := restRect.w * restRect.h
 		for i := 0; i < 2*restArea; i++ {
-			x := rand.Intn(restRect.w) + 2
-			y := rand.Intn(restRect.h) + 2
+			x := rr.Intn(restRect.w) + 2
+			y := rr.Intn(restRect.h) + 2
 			// Don't place in path of entrance
 			if x == entranceX {
 				continue
@@ -140,8 +140,8 @@ func NewShop(width, height int) *Map {
 
 	// Items against walls - pots
 	for i := 0; i < (f.Width+f.Height)*4; i++ {
-		x := rand.Intn(f.Width-4) + 2
-		y := rand.Intn(f.Height-5) + 2
+		x := rr.Intn(f.Width-4) + 2
+		y := rr.Intn(f.Height-5) + 2
 		if x != 2 && x != f.Width-3 && y != 2 && y != f.Height-4 {
 			continue
 		}
@@ -166,8 +166,8 @@ func NewShop(width, height int) *Map {
 	for i := 0; i < c.Width*c.Height/100-1; i++ {
 		// Place assistants in the shop, in front of the counter
 		for {
-			x := rand.Intn(f.Width-4) + 2
-			y := rand.Intn(f.Height-7) + 4
+			x := rr.Intn(f.Width-4) + 2
+			y := rr.Intn(f.Height-7) + 4
 			if f.isClear(x, y, 1, 1) {
 				c.setTile(x, y, assistant)
 				break
@@ -178,8 +178,8 @@ func NewShop(width, height int) *Map {
 	// patrons - place anywhere except behind the counter
 	for i := 0; i < c.Width*c.Height/36; i++ {
 		for {
-			x := rand.Intn(f.Width)
-			y := rand.Intn(f.Height)
+			x := rr.Intn(f.Width)
+			y := rr.Intn(f.Height)
 			if !(y == 2 && x >= counterX && x < counterX+counterW) &&
 				// Allow patrons on rug
 				(s.isClear(x, y, 1, 1) || s.getTile(x, y) == rug) &&

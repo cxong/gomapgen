@@ -1,7 +1,9 @@
 package gmgmap
 
+import "math/rand"
+
 // NewRandomWalk - create a tree-on-floor map using random walk algorithm
-func NewRandomWalk(width, height, iterations int) *Map {
+func NewRandomWalk(rr *rand.Rand, width, height, iterations int) *Map {
 	m := NewMap(width, height)
 	m.Layer("Ground").fill(floor)
 	// Start walking from the middle, randomly
@@ -9,7 +11,7 @@ func NewRandomWalk(width, height, iterations int) *Map {
 	l := m.Layer("Structures")
 	for i := 0; i < iterations; i++ {
 		l.setTile(x, y, tree)
-		x, y = randomWalk(x, y, m.Width, m.Height)
+		x, y = randomWalk(rr, x, y, m.Width, m.Height)
 	}
 	return m
 }

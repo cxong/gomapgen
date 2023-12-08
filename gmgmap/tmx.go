@@ -80,7 +80,7 @@ type TMXTemplate struct {
 }
 
 // ToTMX - export map as TMX (Tiled XML map)
-func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
+func (m Map) ToTMX(rr *rand.Rand, tmxTemplate *TMXTemplate) error {
 	exportDir := "tmx_export"
 	err := os.Mkdir(exportDir, 0755)
 	if err != nil && !os.IsExist(err) {
@@ -126,7 +126,7 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 		return err
 	}
 
-	populateTemplate(m, tmxTemplate)
+	populateTemplate(rr, m, tmxTemplate)
 
 	// Generate TMX
 	// Use template path as template name
@@ -144,7 +144,7 @@ func (m Map) ToTMX(tmxTemplate *TMXTemplate) error {
 	return nil
 }
 
-func populateTemplate(m Map, tmp *TMXTemplate) {
+func populateTemplate(rr *rand.Rand, m Map, tmp *TMXTemplate) {
 	tmp.Width = m.Width
 	tmp.Height = m.Height
 	var arrayToCSV = func(xt []string, w, h int) string {
@@ -210,14 +210,14 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 				case sign:
 					// choose from on-wall sign or stand-alone sign
 					if IsWall(wallLayer.getTile(x, y)) {
-						xt[x+y*l.Width] = tmp.wallSignIDs[rand.Intn(len(tmp.wallSignIDs))]
+						xt[x+y*l.Width] = tmp.wallSignIDs[rr.Intn(len(tmp.wallSignIDs))]
 					} else {
-						xt[x+y*l.Width] = tmp.signIDs[rand.Intn(len(tmp.signIDs))]
+						xt[x+y*l.Width] = tmp.signIDs[rr.Intn(len(tmp.signIDs))]
 					}
 				case hanging:
-					xt[x+y*l.Width] = tmp.hangingIDs[rand.Intn(len(tmp.hangingIDs))]
+					xt[x+y*l.Width] = tmp.hangingIDs[rr.Intn(len(tmp.hangingIDs))]
 				case window:
-					xt[x+y*l.Width] = tmp.windowIDs[rand.Intn(len(tmp.windowIDs))]
+					xt[x+y*l.Width] = tmp.windowIDs[rr.Intn(len(tmp.windowIDs))]
 				case counter:
 					top := y > 0 && l.getTile(x, y-1) == counter
 					bottom := y < l.Height-1 && l.getTile(x, y+1) == counter
@@ -238,11 +238,11 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 						xt[x+y*l.Width] = tmp.counterVIDs[0]
 					}
 				case shopkeeper:
-					xt[x+y*l.Width] = tmp.shopkeeperIDs[rand.Intn(len(tmp.shopkeeperIDs))]
+					xt[x+y*l.Width] = tmp.shopkeeperIDs[rr.Intn(len(tmp.shopkeeperIDs))]
 				case shelf:
 					xt[x+y*l.Width] = tmp.shelfID
 				case stock:
-					xt[x+y*l.Width] = tmp.stockIDs[rand.Intn(len(tmp.stockIDs))]
+					xt[x+y*l.Width] = tmp.stockIDs[rr.Intn(len(tmp.stockIDs))]
 				case table:
 					xt[x+y*l.Width] = tmp.tableID
 				case chair:
@@ -255,15 +255,15 @@ func populateTemplate(m Map, tmp *TMXTemplate) {
 				case rug:
 					tileIDs = &tmp.rugIDs
 				case pot:
-					xt[x+y*l.Width] = tmp.potIDs[rand.Intn(len(tmp.potIDs))]
+					xt[x+y*l.Width] = tmp.potIDs[rr.Intn(len(tmp.potIDs))]
 				case assistant:
-					xt[x+y*l.Width] = tmp.assistantIDs[rand.Intn(len(tmp.assistantIDs))]
+					xt[x+y*l.Width] = tmp.assistantIDs[rr.Intn(len(tmp.assistantIDs))]
 				case player:
-					xt[x+y*l.Width] = tmp.playerIDs[rand.Intn(len(tmp.playerIDs))]
+					xt[x+y*l.Width] = tmp.playerIDs[rr.Intn(len(tmp.playerIDs))]
 				case flower:
-					xt[x+y*l.Width] = tmp.flowerIDs[rand.Intn(len(tmp.flowerIDs))]
+					xt[x+y*l.Width] = tmp.flowerIDs[rr.Intn(len(tmp.flowerIDs))]
 				case key:
-					xt[x+y*l.Width] = tmp.keyIDs[rand.Intn(len(tmp.keyIDs))]
+					xt[x+y*l.Width] = tmp.keyIDs[rr.Intn(len(tmp.keyIDs))]
 				default:
 					fmt.Println("Unhandled tile", tile)
 					panic(tile)

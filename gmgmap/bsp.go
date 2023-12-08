@@ -1,11 +1,9 @@
 package gmgmap
 
-import (
-	"math/rand"
-)
+import "math/rand"
 
 // NewBSP - generate a new dungeon, using BSP method
-func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *Map {
+func NewBSP(rr *rand.Rand, width, height, iterations, minRoomSize, connectionIterations int) *Map {
 	m := NewMap(width, height)
 
 	// Split the map for a number of iterations, choosing random axis and location
@@ -15,7 +13,7 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 		if areas[i].level == iterations {
 			break
 		}
-		if r1, r2, err := areas[i].Split(i, minRoomSize, 0); err == nil {
+		if r1, r2, err := areas[i].Split(rr, i, minRoomSize, 0); err == nil {
 			areas[i].child1 = len(areas)
 			areas = append(areas, r1)
 			areas[i].child2 = len(areas)
@@ -37,8 +35,8 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 			r.w = minRoomSize
 			r.x = areas[i].r.x
 		} else {
-			r.w = rand.Intn(areas[i].r.w-minRoomSize) + minRoomSize
-			r.x = rand.Intn(areas[i].r.w-r.w) + areas[i].r.x
+			r.w = rr.Intn(areas[i].r.w-minRoomSize) + minRoomSize
+			r.x = rr.Intn(areas[i].r.w-r.w) + areas[i].r.x
 			xmid := areas[i].r.x + areas[i].r.w/2
 			r.x = iclamp(r.x, xmid-(r.w-2), xmid-1)
 		}
@@ -46,8 +44,8 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 			r.h = minRoomSize
 			r.y = areas[i].r.y
 		} else {
-			r.h = rand.Intn(areas[i].r.h-minRoomSize) + minRoomSize
-			r.y = rand.Intn(areas[i].r.h-r.h) + areas[i].r.y
+			r.h = rr.Intn(areas[i].r.h-minRoomSize) + minRoomSize
+			r.y = rr.Intn(areas[i].r.h-r.h) + areas[i].r.y
 			ymid := areas[i].r.y + areas[i].r.h/2
 			r.y = iclamp(r.y, ymid-(r.h-2), ymid-1)
 		}
@@ -76,13 +74,13 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 			// Connect left/right
 			aymin, aymax := getYRange(*g, a.r)
 			symin, symax := getYRange(*g, sibling.r)
-			y := irand(imax(aymin, symin), imin(aymax, symax))
+			y := irand(rr, imax(aymin, symin), imin(aymax, symax))
 			addStraightCorridor(g, s, a.r.x+a.r.w, y, 1, 0, room2, wall2)
 		} else {
 			// Connect up/down
 			axmin, axmax := getXRange(*g, a.r)
 			sxmin, sxmax := getXRange(*g, sibling.r)
-			x := irand(imax(axmin, sxmin), imin(axmax, sxmax))
+			x := irand(rr, imax(axmin, sxmin), imin(axmax, sxmax))
 			addStraightCorridor(g, s, x, a.r.y+a.r.h, 0, 1, room2, wall2)
 		}
 	}
@@ -90,16 +88,16 @@ func NewBSP(width, height, iterations, minRoomSize, connectionIterations int) *M
 	// To improve connectivity, randomly draw extra corridors from leaves out in a
 	// direction other than their sibling
 	for n := 0; n < connectionIterations; n++ {
-		i := rand.Intn(len(areas))
+		i := rr.Intn(len(areas))
 		a := areas[i]
 		// Leaves only
 		if !a.IsLeaf() {
 			continue
 		}
 		// Pick a random cardinal direction
-		dx := rand.Intn(1)*2 - 1
-		dy := rand.Intn(1)*2 - 1
-		if rand.Intn(1) > 0 {
+		dx := rr.Intn(1)*2 - 1
+		dy := rr.Intn(1)*2 - 1
+		if rr.Intn(1) > 0 {
 			dx = 0
 		} else {
 			dy = 0

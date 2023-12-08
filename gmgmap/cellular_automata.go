@@ -12,7 +12,7 @@ const (
 // If the number of stones within one step (including itself) is at least r1 OR
 // the number of stones within 2 steps at most r2, turn into a stone,
 // else turn into a floor
-func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
+func NewCellularAutomata(rr *rand.Rand, width, height, fillPct, repeat, r1, r2 int) *Map {
 
 	m := NewMap(width, height)
 	g := m.Layer("Ground")
@@ -24,7 +24,7 @@ func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
 	}
 	// Shuffle
 	for i := range l.Tiles {
-		j := rand.Intn(i + 1)
+		j := rr.Intn(i + 1)
 		l.Tiles[i], l.Tiles[j] = l.Tiles[j], l.Tiles[i]
 	}
 	// Repetitions
@@ -58,7 +58,7 @@ func NewCellularAutomata(width, height, fillPct, repeat, r1, r2 int) *Map {
 		areaTiles[i] = rune(i)
 	}
 	for i := range areaTiles {
-		j := rand.Intn(i + 1)
+		j := rr.Intn(i + 1)
 		areaTiles[i], areaTiles[j] = areaTiles[j], areaTiles[i]
 	}
 	areaStarts := make([]rune, numAreas)

@@ -13,13 +13,13 @@ type building struct {
 	importance int
 }
 
-func (b building) addNPC(c *Layer) {
+func (b building) addNPC(rr *rand.Rand, c *Layer) {
 	// Try to place a random NPC somewhere inside the building
-	c.setTileInAreaIfEmpty(rect{b.r.x + 1, b.r.y + 1, b.r.w - 2, b.r.h - 2}, player)
+	c.setTileInAreaIfEmpty(rr, rect{b.r.x + 1, b.r.y + 1, b.r.w - 2, b.r.h - 2}, player)
 }
 
 // NewVillage - create a village, made up of multiple buildings
-func NewVillage(width, height, buildingPadding int) *Map {
+func NewVillage(rr *rand.Rand, width, height, buildingPadding int) *Map {
 	m := NewMap(width, height)
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
@@ -28,24 +28,24 @@ func NewVillage(width, height, buildingPadding int) *Map {
 	// Grass
 	g.fill(grass)
 
-	buildings := genBuildings(width, height, buildingPadding)
-	assignBuildingImportance(buildings)
+	buildings := genBuildings(rr, width, height, buildingPadding)
+	assignBuildingImportance(rr, buildings)
 	placeBuildings(g, s, f, buildings)
-	addPaths(g, s, buildings)
+	addPaths(rr, g, s, buildings)
 	c := m.Layer("Characters")
-	placeNPCs(c, buildings)
+	placeNPCs(rr, c, buildings)
 
 	return m
 }
 
-func genBuildings(width, height, buildingPadding int) []building {
+func genBuildings(rr *rand.Rand, width, height, buildingPadding int) []building {
 	buildings := make([]building, 0)
 	// Keep placing buildings for a while
 	for i := 0; i < 500; i++ {
-		w := rand.Intn(3) + 5
-		h := rand.Intn(3) + 5
-		x := rand.Intn(width - w)
-		y := rand.Intn(height - h)
+		w := rr.Intn(3) + 5
+		h := rr.Intn(3) + 5
+		x := rr.Intn(width - w)
+		y := rr.Intn(height - h)
 		if x < 0 || y < 0 {
 			continue
 		}
@@ -71,9 +71,9 @@ func genBuildings(width, height, buildingPadding int) []building {
 	return buildings
 }
 
-func assignBuildingImportance(buildings []building) {
+func assignBuildingImportance(rr *rand.Rand, buildings []building) {
 	for i := range buildings {
-		imp := int(math.Pow(float64(rand.Float32()*3.0+1), 2))
+		imp := int(math.Pow(float64(rr.Float32()*3.0+1), 2))
 		buildings[i].importance = imp
 	}
 }
@@ -91,7 +91,7 @@ func placeBuildings(g, s, f *Layer, buildings []building) {
 	}
 }
 
-func addPaths(g, s *Layer, buildings []building) {
+func addPaths(rr *rand.Rand, g, s *Layer, buildings []building) {
 	// Draw paths between random pairs of entrances via importance
 	// Ensure at least one path exists for all buildings
 
@@ -106,9 +106,9 @@ func addPaths(g, s *Layer, buildings []building) {
 	for i := 0; i < numPaths || len(buildingsWithPaths) < len(buildings); i++ {
 		for {
 			// Check for path valid and exists
-			building1 := rand.Intn(len(buildings))
+			building1 := rr.Intn(len(buildings))
 			// randomly select second building by importance
-			impFact := rand.Intn(impSum)
+			impFact := rr.Intn(impSum)
 			building2 := 0
 			impFactSum := 0
 			for j, b2 := range buildings {
@@ -165,11 +165,11 @@ func placePaths(g, s *Layer, world villageWorld, usage0, usage1, usage2, usage3 
 	}
 }
 
-func placeNPCs(c *Layer, buildings []building) {
+func placeNPCs(rr *rand.Rand, c *Layer, buildings []building) {
 	// Place NPCs based on importance
 	for _, building := range buildings {
 		for i := 0; i < building.importance/2; i++ {
-			building.addNPC(c)
+			building.addNPC(rr, c)
 		}
 	}
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	algo := flag.String("algo", "bspinterior", "generation algorithm: bsp/bspinterior/cell/rogue/shop/walk")
+	algo := flag.String("algo", "bspinterior", "generation algorithm: bsp/bspinterior/cell/rogue/shop/wfcshop/walk/village")
 	template := flag.String("template", "dawnlike", "TMX export template: dawnlike/kenney")
 	width := flag.Int("width", 32, "map width")
 	height := flag.Int("height", 32, "map height")
@@ -40,27 +40,29 @@ func main() {
 	flag.Parse()
 	// make map
 	fmt.Println("Using seed", *seed)
-	rand.Seed(*seed)
+	rr := rand.New(rand.NewSource(*seed))
 	m := gmgmap.NewMap(*width, *height)
 	switch *algo {
 	case "bsp":
-		m = gmgmap.NewBSP(*width, *height, *splits, *minRoomSize, *connectionIterations)
+		m = gmgmap.NewBSP(rr, *width, *height, *splits, *minRoomSize, *connectionIterations)
 	case "bspinterior":
-		m = gmgmap.NewBSPInterior(*width, *height, *splits, *minRoomSize, *corridorWidth)
+		m = gmgmap.NewBSPInterior(rr, *width, *height, *splits, *minRoomSize, *corridorWidth)
 	case "cell":
-		m = gmgmap.NewCellularAutomata(*width, *height, *fillPct, *reps, *r1, *r2)
+		m = gmgmap.NewCellularAutomata(rr, *width, *height, *fillPct, *reps, *r1, *r2)
 	case "interior":
 		m = gmgmap.NewInterior(
-			*width, *height, *minRoomSize, *maxRoomSize, *lobbyEdgeType)
+			rr, *width, *height, *minRoomSize, *maxRoomSize, *lobbyEdgeType)
 	case "rogue":
-		m = gmgmap.NewRogue(*width, *height, *gridWidth, *gridHeight,
+		m = gmgmap.NewRogue(rr, *width, *height, *gridWidth, *gridHeight,
 			*minRoomPct, *maxRoomPct)
 	case "shop":
-		m = gmgmap.NewShop(*width, *height)
+		m = gmgmap.NewShop(rr, *width, *height)
 	case "walk":
-		m = gmgmap.NewRandomWalk(*width, *height, *iterations)
+		m = gmgmap.NewRandomWalk(rr, *width, *height, *iterations)
+	case "wfcshop":
+		m = gmgmap.NewWFCShop(rr, *width, *height)
 	case "village":
-		m = gmgmap.NewVillage(*width, *height, *buildingPadding)
+		m = gmgmap.NewVillage(rr, *width, *height, *buildingPadding)
 	}
 	// print
 	m.Print()
@@ -74,7 +76,7 @@ func main() {
 		case "kenney":
 			t = &gmgmap.KenneyTemplate
 		}
-		if err := m.ToTMX(t); err != nil {
+		if err := m.ToTMX(rr, t); err != nil {
 			panic(err)
 		}
 	}

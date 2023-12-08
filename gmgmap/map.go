@@ -107,10 +107,10 @@ func (l *Layer) setTile(x, y int, tile rune) {
 	l.Tiles[x+y*l.Width] = tile
 }
 
-func (l *Layer) setTileInAreaIfEmpty(r rect, tile rune) {
+func (l *Layer) setTileInAreaIfEmpty(rr *rand.Rand, r rect, tile rune) {
 	for i := 0; i < 100; i++ {
-		x := rand.Intn(r.w) + r.x
-		y := rand.Intn(r.h) + r.y
+		x := rr.Intn(r.w) + r.x
+		y := rr.Intn(r.h) + r.y
 		if l.getTile(x, y) == nothing {
 			l.setTile(x, y, tile)
 			break

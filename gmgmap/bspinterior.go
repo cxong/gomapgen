@@ -46,13 +46,13 @@ func (a adjacencyMatrix) IsConnected(i, j int) bool {
 
 // NewBSPInterior - Create new BSP interior map
 // Implementation of https://gamedev.stackexchange.com/questions/47917/procedural-house-with-rooms-generator/48216#48216
-func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map {
+func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorWidth int) *Map {
 	corridorLevelDiffBlock := 1
 	m := NewMap(width, height)
 	var areas []bspArea
 
 	// Split the map for a number of iterations, choosing alternating axis and random location
-	hcount := rand.Intn(2)
+	hcount := rr.Intn(2)
 	areas = append(areas, bspArea{bspRoomRoot(width, height), false, false, false})
 	for i := 0; i < len(areas); i++ {
 		if areas[i].level == splits {
@@ -63,9 +63,9 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		// Alternate splitting direction per level
 		horizontal := ((hcount + areas[i].level) % 2) == 1
 		if horizontal {
-			r1, r2, err = areas[i].SplitHorizontal(i, minRoomSize+corridorWidth/2)
+			r1, r2, err = areas[i].SplitHorizontal(rr, i, minRoomSize+corridorWidth/2)
 		} else {
-			r1, r2, err = areas[i].SplitVertical(i, minRoomSize+corridorWidth/2)
+			r1, r2, err = areas[i].SplitVertical(rr, i, minRoomSize+corridorWidth/2)
 		}
 		if err == nil {
 			// Resize rooms to allow space for street
@@ -109,9 +109,9 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 		var r1, r2 bspRoom
 		var err error = nil
 		if areas[i].r.w > areas[i].r.h {
-			r1, r2, err = areas[i].SplitHorizontal(i, minRoomSize)
+			r1, r2, err = areas[i].SplitHorizontal(rr, i, minRoomSize)
 		} else {
-			r1, r2, err = areas[i].SplitVertical(i, minRoomSize)
+			r1, r2, err = areas[i].SplitVertical(rr, i, minRoomSize)
 		}
 		if err == nil {
 			// Resize rooms so they share a splitting wall
@@ -351,7 +351,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			panic("Cannot find child for locked street")
 		} else {
 			r := rect{areas[child].r.x + 1, areas[child].r.y + 1, areas[child].r.w - 2, areas[child].r.h - 2}
-			c.setTileInAreaIfEmpty(r, key)
+			c.setTileInAreaIfEmpty(rr, r, key)
 		}
 	}
 
@@ -367,7 +367,7 @@ func NewBSPInterior(width, height, splits, minRoomSize, corridorWidth int) *Map 
 			} else {
 				r = rect{areas[i].r.x + areas[i].dAlong().x, areas[i].r.y + areas[i].dAlong().y, areas[i].r.w - 2*areas[i].dAlong().x, areas[i].r.h - 2*areas[i].dAlong().y}
 			}
-			c.setTileInAreaIfEmpty(r, player)
+			c.setTileInAreaIfEmpty(rr, r, player)
 		}
 	}
 
