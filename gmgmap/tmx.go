@@ -6,8 +6,10 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 )
@@ -80,7 +82,7 @@ type TMXTemplate struct {
 }
 
 // ToTMX - export map as TMX (Tiled XML map)
-func (m Map) ToTMX(rr *rand.Rand, tmxTemplate *TMXTemplate) error {
+func (m Map) ToTMX(rr *rand.Rand, tmxTemplate *TMXTemplate, imgId int) error {
 	exportDir := "tmx_export"
 	err := os.Mkdir(exportDir, 0755)
 	if err != nil && !os.IsExist(err) {
@@ -134,13 +136,34 @@ func (m Map) ToTMX(rr *rand.Rand, tmxTemplate *TMXTemplate) error {
 	if err != nil {
 		return err
 	}
-	templateFile, err := os.Create(path.Join(exportDir, "map.tmx"))
+	outPath := path.Join(exportDir, "map.tmx")
+	outFile, err := os.Create(outPath)
 	if err != nil {
 		return err
 	}
-	if err := t.Execute(templateFile, tmxTemplate); err != nil {
+	if err := t.Execute(outFile, tmxTemplate); err != nil {
 		return err
 	}
+
+	// Export tmx to image
+	if imgId >= 0 {
+		rasterizer := ""
+		switch runtime.GOOS {
+		case "windows":
+			rasterizer = "/c/Program Files/Tiled/tmxrasterizer.exe"
+		case "darwin":
+			rasterizer = "/Applications/Tiled.app/Contents/MacOS/tmxrasterizer"
+		default:
+			panic("don't know where tmxrasterizer is")
+		}
+		cmd := exec.Command(rasterizer, outPath, fmt.Sprintf("%s/map%d.png", exportDir, imgId))
+		_, err := cmd.Output()
+		if err != nil {
+			fmt.Println(err.Error())
+			return err
+		}
+	}
+
 	return nil
 }
 

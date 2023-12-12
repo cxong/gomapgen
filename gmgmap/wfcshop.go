@@ -21,17 +21,24 @@ import "math/rand"
 //   - shopkeep
 //
 // - shelves (up to 3 width aisles)
+//   - at least 3 wide from the right wall
+//   - does not overlap with rest area
 //   - items on shelves
 //
 // - rest area (if at least 3 wide free)
+//   - below counter area
+//   - between the left wall and middle of the room
+//   - does not overlap with shelf area
 //   - rug
 //   - tables/chairs (randomly placed, at least one chair per table)
 //
 // - against walls (display items, pots, barrels, leave diagonals free)
 // - assistants (1 per 100 tiles, after the first)
 // - patrons (1 per 36 tiles)
-func NewWFCShop(rr *rand.Rand, width, height int) *Map {
+func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 	m := NewMap(width, height)
+
+	exportFunc(m)
 
 	// Grass with road surroundings
 	g := m.Layer("Ground")

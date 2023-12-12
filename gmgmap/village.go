@@ -19,7 +19,7 @@ func (b building) addNPC(rr *rand.Rand, c *Layer) {
 }
 
 // NewVillage - create a village, made up of multiple buildings
-func NewVillage(rr *rand.Rand, width, height, buildingPadding int) *Map {
+func NewVillage(rr *rand.Rand, exportFunc func(*Map), width, height, buildingPadding int) *Map {
 	m := NewMap(width, height)
 	g := m.Layer("Ground")
 	s := m.Layer("Structures")
@@ -27,11 +27,14 @@ func NewVillage(rr *rand.Rand, width, height, buildingPadding int) *Map {
 
 	// Grass
 	g.fill(grass)
+	exportFunc(m)
 
 	buildings := genBuildings(rr, width, height, buildingPadding)
 	assignBuildingImportance(rr, buildings)
-	placeBuildings(g, s, f, buildings)
+	placeBuildings(m, exportFunc, g, s, f, buildings)
+	exportFunc(m)
 	addPaths(rr, g, s, buildings)
+	exportFunc(m)
 	c := m.Layer("Characters")
 	placeNPCs(rr, c, buildings)
 
@@ -78,7 +81,7 @@ func assignBuildingImportance(rr *rand.Rand, buildings []building) {
 	}
 }
 
-func placeBuildings(g, s, f *Layer, buildings []building) {
+func placeBuildings(m *Map, exportFunc func(*Map), g, s, f *Layer, buildings []building) {
 	for _, building := range buildings {
 		imp := building.importance
 		// Use tiles based on importance
@@ -88,6 +91,7 @@ func placeBuildings(g, s, f *Layer, buildings []building) {
 		}
 		hasSign := imp > 5
 		addBuilding(g, s, f, building.r, tileRoom, tileWall, hasSign)
+		exportFunc(m)
 	}
 }
 

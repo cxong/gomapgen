@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"os/exec"
 	"time"
 
 	"github.com/cxong/gomapgen/gmgmap"
@@ -42,6 +43,25 @@ func main() {
 	fmt.Println("Using seed", *seed)
 	rr := rand.New(rand.NewSource(*seed))
 	m := gmgmap.NewMap(*width, *height)
+	t := &gmgmap.DawnLikeTemplate
+	switch *template {
+	case "dawnlike":
+		t = &gmgmap.DawnLikeTemplate
+	case "kenney":
+		t = &gmgmap.KenneyTemplate
+	}
+
+	// Iteratively generate and export map
+	imgId := 0
+	exportFunc := func(m_ *gmgmap.Map) {
+		if *export {
+			if err := m_.ToTMX(rr, t, imgId); err != nil {
+				panic(err)
+			}
+			imgId++
+		}
+	}
+
 	switch *algo {
 	case "bsp":
 		m = gmgmap.NewBSP(rr, *width, *height, *splits, *minRoomSize, *connectionIterations)
@@ -60,24 +80,22 @@ func main() {
 	case "walk":
 		m = gmgmap.NewRandomWalk(rr, *width, *height, *iterations)
 	case "wfcshop":
-		m = gmgmap.NewWFCShop(rr, *width, *height)
+		m = gmgmap.NewWFCShop(rr, exportFunc, *width, *height)
 	case "village":
-		m = gmgmap.NewVillage(rr, *width, *height, *buildingPadding)
+		m = gmgmap.NewVillage(rr, exportFunc, *width, *height, *buildingPadding)
 	}
+
 	// print
 	m.Print()
 	//m.PrintCSV()
 	// export TMX
+	exportFunc(m)
+	// export gif
 	if *export {
-		t := &gmgmap.DawnLikeTemplate
-		switch *template {
-		case "dawnlike":
-			t = &gmgmap.DawnLikeTemplate
-		case "kenney":
-			t = &gmgmap.KenneyTemplate
-		}
-		if err := m.ToTMX(rr, t); err != nil {
-			panic(err)
+		cmd := exec.Command("convert", "-delay", "200", "-dispose", "previous", "tmx_export/map*.png", "tmx_export/map.gif")
+		_, err := cmd.Output()
+		if err != nil {
+			fmt.Println(err.Error())
 		}
 	}
 }
