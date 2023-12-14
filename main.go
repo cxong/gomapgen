@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/cxong/gomapgen/gmgmap"
@@ -54,7 +57,19 @@ func main() {
 	// Iteratively generate and export map
 	imgId := 0
 	exportFunc := func(m_ *gmgmap.Map) {
-		if *export {
+	}
+	if *export {
+		// Remove existing images
+		files, err := filepath.Glob("tmx_export/map*.png")
+		if err != nil {
+			panic(err)
+		}
+		for _, f := range files {
+			if err := os.Remove(f); err != nil {
+				panic(err)
+			}
+		}
+		exportFunc = func(m_ *gmgmap.Map) {
 			if err := m_.ToTMX(rr, t, imgId); err != nil {
 				panic(err)
 			}
@@ -92,7 +107,9 @@ func main() {
 	exportFunc(m)
 	// export gif
 	if *export {
-		cmd := exec.Command("convert", "-delay", "200", "-dispose", "previous", "tmx_export/map*.png", "tmx_export/map.gif")
+		cmd := exec.Command("convert", "-delay", strconv.Itoa(1000/(imgId+1)), "-dispose", "previous", "tmx_export/map*.png",
+			// make the last frame last longer
+			"-delay", "200", fmt.Sprintf("tmx_export/map%04d.png", imgId-1), "tmx_export/map.gif")
 		_, err := cmd.Output()
 		if err != nil {
 			fmt.Println(err.Error())

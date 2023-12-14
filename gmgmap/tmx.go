@@ -156,7 +156,7 @@ func (m Map) ToTMX(rr *rand.Rand, tmxTemplate *TMXTemplate, imgId int) error {
 		default:
 			panic("don't know where tmxrasterizer is")
 		}
-		cmd := exec.Command(rasterizer, outPath, fmt.Sprintf("%s/map%d.png", exportDir, imgId))
+		cmd := exec.Command(rasterizer, outPath, fmt.Sprintf("%s/map%04d.png", exportDir, imgId))
 		_, err := cmd.Output()
 		if err != nil {
 			fmt.Println(err.Error())

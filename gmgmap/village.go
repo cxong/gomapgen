@@ -33,10 +33,10 @@ func NewVillage(rr *rand.Rand, exportFunc func(*Map), width, height, buildingPad
 	assignBuildingImportance(rr, buildings)
 	placeBuildings(m, exportFunc, g, s, f, buildings)
 	exportFunc(m)
-	addPaths(rr, g, s, buildings)
+	addPaths(rr, m, exportFunc, g, s, buildings)
 	exportFunc(m)
 	c := m.Layer("Characters")
-	placeNPCs(rr, c, buildings)
+	placeNPCs(rr, m, exportFunc, c, buildings)
 
 	return m
 }
@@ -95,7 +95,7 @@ func placeBuildings(m *Map, exportFunc func(*Map), g, s, f *Layer, buildings []b
 	}
 }
 
-func addPaths(rr *rand.Rand, g, s *Layer, buildings []building) {
+func addPaths(rr *rand.Rand, m *Map, exportFunc func(*Map), g, s *Layer, buildings []building) {
 	// Draw paths between random pairs of entrances via importance
 	// Ensure at least one path exists for all buildings
 
@@ -141,12 +141,27 @@ func addPaths(rr *rand.Rand, g, s *Layer, buildings []building) {
 				for _, t := range path {
 					world.incUsage(t.(*villageTile).x, t.(*villageTile).y)
 				}
+				placePaths(g, s, world, tree, grass, road, road2)
+				exportFunc(m)
+				unplacePaths(s, tree)
 			}
 			break
 		}
 	}
-
 	placePaths(g, s, world, tree, grass, road, road2)
+}
+
+func unplacePaths(s *Layer, usage0 rune) {
+	// To avoid not being able to find paths, because we are
+	// iteratively placing trees for usage0 which blocks paths,
+	// we clear all tree tiles
+	for y := 0; y < s.Height; y++ {
+		for x := 0; x < s.Width; x++ {
+			if s.getTile(x, y) == usage0 {
+				s.setTile(x, y, nothing)
+			}
+		}
+	}
 }
 
 func placePaths(g, s *Layer, world villageWorld, usage0, usage1, usage2, usage3 rune) {
@@ -169,12 +184,13 @@ func placePaths(g, s *Layer, world villageWorld, usage0, usage1, usage2, usage3 
 	}
 }
 
-func placeNPCs(rr *rand.Rand, c *Layer, buildings []building) {
+func placeNPCs(rr *rand.Rand, m *Map, exportFunc func(*Map), c *Layer, buildings []building) {
 	// Place NPCs based on importance
 	for _, building := range buildings {
 		for i := 0; i < building.importance/2; i++ {
 			building.addNPC(rr, c)
 		}
+		exportFunc(m)
 	}
 }
 
