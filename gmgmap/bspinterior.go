@@ -46,7 +46,7 @@ func (a adjacencyMatrix) IsConnected(i, j int) bool {
 
 // NewBSPInterior - Create new BSP interior map
 // Implementation of https://gamedev.stackexchange.com/questions/47917/procedural-house-with-rooms-generator/48216#48216
-func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorWidth int) *Map {
+func NewBSPInterior(rr *rand.Rand, exportFunc func(*Map), width, height, splits, minRoomSize, corridorWidth int) *Map {
 	corridorLevelDiffBlock := 1
 	m := NewMap(width, height)
 	var areas []bspArea
@@ -132,13 +132,14 @@ func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorW
 
 	// Fill rooms
 	for i := range areas {
-		// Skip non-leaves
-		if !areas[i].IsLeaf() {
-			continue
-		}
+		// Note: we should skip non-leaves, but for the sake of looking good
+		// when iteratively generating, make those rooms anyway
+		// The leaf nodes should be later in the areas collection
+		//if !areas[i].IsLeaf() { continue }
 		r := areas[i].r
 		g.rectangleFilled(rect{r.x + 1, r.y + 1, r.w - 2, r.h - 2}, room)
 		s.rectangleUnfilled(r, wall2)
+		exportFunc(m)
 	}
 
 	// Set up adjacency matrix
@@ -197,6 +198,7 @@ func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorW
 				adjacency.Connect(i, streetI)
 				// Change parentage
 				areas[i].parent = streetI
+				exportFunc(m)
 				break
 			}
 		}
@@ -251,6 +253,7 @@ func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorW
 				// Change parentage
 				areas[i].parent = j
 				numUnconnected--
+				exportFunc(m)
 				break
 			}
 		}
@@ -263,8 +266,10 @@ func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorW
 	// This represents longest/critical path
 	deepestRoom1 := findDeepestRoomFrom(areas, areas[0].child1)
 	placeInsideRoom(s, areas[deepestRoom1].r, stairsUp)
+	exportFunc(m)
 	deepestRoom2 := findDeepestRoomFrom(areas, areas[0].child2)
 	placeInsideRoom(s, areas[deepestRoom2].r, stairsDown)
+	exportFunc(m)
 	markParentStreets := func(area *bspArea) {
 		street := area
 		for {
@@ -285,11 +290,14 @@ func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorW
 			continue
 		}
 		g.rectangleFilled(areas[i].r, room2)
+		// Remove the walls we added from non-leaf rooms before
+		s.rectangleFilled(areas[i].r, nothing)
 		// Check ends of street - cap or place door
 		end1 := vec2{areas[i].r.x, areas[i].r.y}
 		end2 := vec2{areas[i].r.x + areas[i].r.w - 1, areas[i].r.y + areas[i].r.h - 1}
 		capStreet(g, s, areas, areas[i], end1, areas[i].dAcross(), areas[i].dAlong(), corridorWidth, corridorLevelDiffBlock)
 		capStreet(g, s, areas, areas[i], end2, vec2{-areas[i].dAcross().x, -areas[i].dAcross().y}, vec2{-areas[i].dAlong().x, -areas[i].dAlong().y}, corridorWidth, corridorLevelDiffBlock)
+		exportFunc(m)
 	}
 
 	// Use adjacency matrix to determine distance of all leaf nodes from critical path
@@ -352,6 +360,7 @@ func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorW
 		} else {
 			r := rect{areas[child].r.x + 1, areas[child].r.y + 1, areas[child].r.w - 2, areas[child].r.h - 2}
 			c.setTileInAreaIfEmpty(rr, r, key)
+			exportFunc(m)
 		}
 	}
 
@@ -368,6 +377,7 @@ func NewBSPInterior(rr *rand.Rand, width, height, splits, minRoomSize, corridorW
 				r = rect{areas[i].r.x + areas[i].dAlong().x, areas[i].r.y + areas[i].dAlong().y, areas[i].r.w - 2*areas[i].dAlong().x, areas[i].r.h - 2*areas[i].dAlong().y}
 			}
 			c.setTileInAreaIfEmpty(rr, r, player)
+			exportFunc(m)
 		}
 	}
 

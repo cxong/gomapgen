@@ -45,6 +45,8 @@ func main() {
 	// make map
 	fmt.Println("Using seed", *seed)
 	rr := rand.New(rand.NewSource(*seed))
+	// Use different RNG for export
+	rr2 := rand.New(rand.NewSource(*seed))
 	m := gmgmap.NewMap(*width, *height)
 	t := &gmgmap.DawnLikeTemplate
 	switch *template {
@@ -70,7 +72,7 @@ func main() {
 			}
 		}
 		exportFunc = func(m_ *gmgmap.Map) {
-			if err := m_.ToTMX(rr, t, imgId); err != nil {
+			if err := m_.ToTMX(rr2, t, imgId); err != nil {
 				panic(err)
 			}
 			imgId++
@@ -81,7 +83,7 @@ func main() {
 	case "bsp":
 		m = gmgmap.NewBSP(rr, *width, *height, *splits, *minRoomSize, *connectionIterations)
 	case "bspinterior":
-		m = gmgmap.NewBSPInterior(rr, *width, *height, *splits, *minRoomSize, *corridorWidth)
+		m = gmgmap.NewBSPInterior(rr, exportFunc, *width, *height, *splits, *minRoomSize, *corridorWidth)
 	case "cell":
 		m = gmgmap.NewCellularAutomata(rr, *width, *height, *fillPct, *reps, *r1, *r2)
 	case "interior":
@@ -107,7 +109,7 @@ func main() {
 	exportFunc(m)
 	// export gif
 	if *export {
-		cmd := exec.Command("convert", "-delay", strconv.Itoa(1000/(imgId+1)), "-dispose", "previous", "tmx_export/map*.png",
+		cmd := exec.Command("convert", "-delay", strconv.Itoa(2000/(imgId+1)), "-dispose", "previous", "tmx_export/map*.png",
 			// make the last frame last longer
 			"-delay", "200", fmt.Sprintf("tmx_export/map%04d.png", imgId-1), "tmx_export/map.gif")
 		_, err := cmd.Output()
