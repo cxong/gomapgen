@@ -51,14 +51,17 @@ See `main.go` for all the options.
 ## --algo=village
 
 ![village](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/village.gif)
+![village build](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/village_build.gif)
 
 ## --algo=shop --width=16 --height=13
 
 ![shop](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/shop.gif)
+![shop build](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/shop_build.gif)
 
 ## --algo=bspinterior --corridorWidth=2
 
 ![bspinterior](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/bspinterior.gif)
+![bspinterior build](https://raw.githubusercontent.com/cxong/gomapgen/master/examples/bspinterior_build.gif)
 
 ## --algo=bsp --width=24 --height=20
 

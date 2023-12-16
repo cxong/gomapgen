@@ -93,7 +93,7 @@ func main() {
 		m = gmgmap.NewRogue(rr, *width, *height, *gridWidth, *gridHeight,
 			*minRoomPct, *maxRoomPct)
 	case "shop":
-		m = gmgmap.NewShop(rr, *width, *height)
+		m = gmgmap.NewShop(rr, exportFunc, *width, *height)
 	case "walk":
 		m = gmgmap.NewRandomWalk(rr, *width, *height, *iterations)
 	case "wfcshop":
