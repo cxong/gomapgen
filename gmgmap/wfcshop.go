@@ -43,6 +43,10 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 
 	exportFunc(m)
 
+	g := m.Layer("Ground")
+	s := m.Layer("Structures")
+	f := m.Layer("Furniture")
+
 	superpositions := newSuperpositions(width, height)
 
 	rules := []Rule{}
@@ -53,14 +57,29 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 
 	// Collapse waves until everything is collapsed
 	for {
-		// Apply rules on every tile to set up the waves
+		// Apply rules on every uncollapsed tile to set up the waves
+		autoCollapseCounter := 0
+		acd := 16
 		for y := 0; y < height; y++ {
 			for x := 0; x < width; x++ {
-				for _, rule := range rules {
-					newSP := rule(superpositions, x, y)
-					if newSP != nil {
-						superpositions.set(x, y, newSP)
+				cv := superpositions.get(x, y).collapsedValue()
+				if cv == nothing {
+					for _, rule := range rules {
+						newSP := rule(superpositions, x, y)
+						if newSP != nil {
+							superpositions.set(x, y, newSP)
+						}
 					}
+				}
+				newCV := superpositions.get(x, y).collapsedValue()
+				if cv == nothing && newCV != nothing {
+					applyCollapsedValue(x, y, newCV, g, s, f)
+					if autoCollapseCounter == 0 {
+						exportFunc(m)
+						autoCollapseCounter = acd
+						acd *= 2
+					}
+					autoCollapseCounter -= 1
 				}
 			}
 		}
@@ -95,27 +114,21 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 			}
 		}
 		superpositions.set(minX, minY, Superposition{maxKey: 1.0})
+		applyCollapsedValue(minX, minY, maxKey, g, s, f)
+		exportFunc(m)
 	}
-
-	g := m.Layer("Ground")
-	// s := m.Layer("Structures")
-	// f := m.Layer("Furniture")
-
-	// Construct map based on superpositions
-	// At this point everything should be collapsed
-	for y := 0; y < g.Height; y++ {
-		for x := 0; x < g.Width; x++ {
-			sp := superpositions.get(x, y)
-			switch sp.collapsedValue() {
-			case grass:
-				g.setTile(x, y, grass)
-			case road:
-				g.setTile(x, y, road)
-			}
-		}
-	}
+	exportFunc(m)
 
 	return m
+}
+
+func applyCollapsedValue(x, y int, t rune, g, s, f *Layer) {
+	switch t {
+	case grass:
+		g.setTile(x, y, t)
+	case road:
+		g.setTile(x, y, t)
+	}
 }
 
 type Superposition map[rune]float64
