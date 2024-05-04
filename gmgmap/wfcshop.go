@@ -40,12 +40,39 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 
 	exportFunc(m)
 
+	superpositions := []map[rune]float32{}
+
 	// Grass with road surroundings
 	g := m.Layer("Ground")
+	for y := 0; y < g.Height; y++ {
+		for x := 0; x < g.Width; x++ {
+			superpositions = append(superpositions, map[rune]float32{grass: 1.0})
+		}
+	}
 	g.fill(grass)
 
 	// s := m.Layer("Structures")
 	// f := m.Layer("Furniture")
+
+	// Construct map based on superpositions
+	// At this point everything should be collapsed
+	for y := 0; y < g.Height; y++ {
+		for x := 0; x < g.Width; x++ {
+			sp := superpositions[x+y*g.Width]
+			if len(sp) != 1 {
+				panic("a superposition is not collapsed")
+			}
+			for key, value := range sp {
+				if value == 1.0 {
+					switch key {
+					case grass:
+						g.setTile(x, y, key)
+					}
+					break
+				}
+			}
+		}
+	}
 
 	return m
 }
