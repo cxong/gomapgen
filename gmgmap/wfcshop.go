@@ -1,6 +1,7 @@
 package gmgmap
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 )
@@ -47,13 +48,16 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 	s := m.Layer("Structures")
 	f := m.Layer("Furniture")
 
-	superpositions := newSuperpositions(width, height)
+	superpositions := newSuperpositions(m)
 
 	rules := []Rule{}
 
 	// Grass with road surroundings
 	rules = append(rules, defaultGrassRule)
 	rules = append(rules, roadAtEdgeRule)
+
+	// Walls inside road
+	rules = append(rules, wallsInsideRoadRule)
 
 	// Collapse waves until everything is collapsed
 	for {
@@ -124,10 +128,14 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 
 func applyCollapsedValue(x, y int, t rune, g, s, f *Layer) {
 	switch t {
+	case wall:
+		s.setTile(x, y, t)
 	case grass:
 		g.setTile(x, y, t)
 	case road:
 		g.setTile(x, y, t)
+	default:
+		panic(fmt.Sprintf("unknown tile %s", string(t)))
 	}
 }
 
@@ -152,6 +160,7 @@ func (s Superposition) collapsedValue() rune {
 
 type Superpositions struct {
 	sp     []Superposition
+	m      *Map
 	Width  int
 	Height int
 }
@@ -164,11 +173,29 @@ func (s *Superpositions) set(x, y int, sp Superposition) {
 	s.sp[x+y*s.Width] = sp
 }
 
-func newSuperpositions(width, height int) *Superpositions {
+// Count the number of collapsed values around a tile that match a certain tile
+// Boundary tiles don't count
+func (s *Superpositions) countCollapsed(x, y, r int, tile rune) int {
+	c := 0
+	for xi := x - r; xi <= x+r; xi++ {
+		for yi := y - r; yi <= y+r; yi++ {
+			if xi < 0 || xi >= s.m.Width || yi < 0 || yi >= s.m.Height {
+				continue
+			}
+			if s.get(xi, yi).collapsedValue() == tile {
+				c++
+			}
+		}
+	}
+	return c
+}
+
+func newSuperpositions(m *Map) *Superpositions {
 	s := new(Superpositions)
-	s.Width, s.Height = width, height
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	s.m = m
+	s.Width, s.Height = m.Width, m.Height
+	for y := 0; y < m.Height; y++ {
+		for x := 0; x < m.Width; x++ {
 			s.sp = append(s.sp, Superposition{nothing: 1.0})
 		}
 	}
@@ -186,8 +213,15 @@ func defaultGrassRule(s *Superpositions, x, y int) Superposition {
 }
 
 func roadAtEdgeRule(s *Superpositions, x, y int) Superposition {
-	if x == 0 || y == 0 || x == s.Width-1 || y == s.Height-1 {
+	if x == 0 || y == 0 || x == s.m.Width-1 || y == s.m.Height-1 {
 		return Superposition{road: 1.0}
+	}
+	return nil
+}
+
+func wallsInsideRoadRule(s *Superpositions, x, y int) Superposition {
+	if s.get(x, y).collapsedValue() != road && s.countCollapsed(x, y, 1, road) >= 1 {
+		return Superposition{wall: 1.0}
 	}
 	return nil
 }
