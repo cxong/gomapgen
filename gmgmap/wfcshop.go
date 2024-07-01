@@ -53,48 +53,54 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 	rules := []Rule{}
 
 	// Grass with road surroundings
-	rules = append(rules, defaultGrassRule)
+	defaultTile := grass
 	rules = append(rules, roadAtEdgeRule)
 
 	// Walls inside road
 	rules = append(rules, wallsInsideRoadRule)
 
 	// Collapse waves until everything is collapsed
+	collapseCounter := 0
+	cd := 16
 	for {
+		autoCollapsed := false
 		// Apply rules on every uncollapsed tile to set up the waves
-		autoCollapseCounter := 0
-		acd := 16
 		for y := 0; y < height; y++ {
 			for x := 0; x < width; x++ {
-				cv := superpositions.get(x, y).collapsedValue()
-				if cv == nothing {
-					for _, rule := range rules {
-						newSP := rule(superpositions, x, y)
-						if newSP != nil {
-							superpositions.set(x, y, newSP)
-						}
+				if superpositions.get(x, y).isCollapsed() {
+					continue
+				}
+				for _, rule := range rules {
+					newSP := rule(superpositions, x, y)
+					if newSP != nil {
+						superpositions.set(x, y, newSP)
 					}
 				}
 				newCV := superpositions.get(x, y).collapsedValue()
-				if cv == nothing && newCV != nothing {
+				if newCV != nothing {
+					autoCollapsed = true
 					applyCollapsedValue(x, y, newCV, g, s, f)
-					if autoCollapseCounter == 0 {
+					if collapseCounter == 0 {
 						exportFunc(m)
-						autoCollapseCounter = acd
-						acd *= 2
+						collapseCounter = cd
+						cd *= 2
 					}
-					autoCollapseCounter -= 1
+					collapseCounter -= 1
 				}
 			}
 		}
 
-		// Choose the tile with lowest entropy
+		// Choose the non-collapsed tile with lowest entropy
 		minEntropy := math.Inf(0)
 		minX := 0
 		minY := 0
 		for y := 0; y < height; y++ {
 			for x := 0; x < width; x++ {
-				entropy := superpositions.get(x, y).entropy()
+				sp := superpositions.get(x, y)
+				if sp.isCollapsed() {
+					continue
+				}
+				entropy := sp.entropy()
 				if entropy < minEntropy {
 					minEntropy = entropy
 					minX = x
@@ -102,8 +108,8 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 				}
 			}
 		}
-		if minEntropy == 0.0 {
-			// Everything is collapsed
+		if minEntropy == math.Inf(0) && !autoCollapsed {
+			// We can't collapse anymore
 			break
 		}
 		// Collapse the highest entropy tile
@@ -119,7 +125,23 @@ func NewWFCShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 		}
 		superpositions.set(minX, minY, Superposition{maxKey: 1.0})
 		applyCollapsedValue(minX, minY, maxKey, g, s, f)
-		exportFunc(m)
+		if collapseCounter == 0 {
+			exportFunc(m)
+			collapseCounter = cd
+			cd *= 2
+		}
+		collapseCounter -= 1
+	}
+	exportFunc(m)
+	// Collapse uncollapsed tiles with default rule
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			sp := superpositions.get(x, y)
+			if sp.isCollapsed() {
+				continue
+			}
+			applyCollapsedValue(x, y, defaultTile, g, s, f)
+		}
 	}
 	exportFunc(m)
 
@@ -142,6 +164,9 @@ func applyCollapsedValue(x, y int, t rune, g, s, f *Layer) {
 type Superposition map[rune]float64
 
 func (s Superposition) entropy() float64 {
+	if len(s) == 0 {
+		return math.Inf(0)
+	}
 	sum := float64(0)
 	for _, value := range s {
 		sum += value * math.Log(value)
@@ -156,6 +181,10 @@ func (s Superposition) collapsedValue() rune {
 		}
 	}
 	return nothing
+}
+
+func (s Superposition) isCollapsed() bool {
+	return s.collapsedValue() != nothing
 }
 
 type Superpositions struct {
@@ -196,21 +225,13 @@ func newSuperpositions(m *Map) *Superpositions {
 	s.Width, s.Height = m.Width, m.Height
 	for y := 0; y < m.Height; y++ {
 		for x := 0; x < m.Width; x++ {
-			s.sp = append(s.sp, Superposition{nothing: 1.0})
+			s.sp = append(s.sp, Superposition{})
 		}
 	}
 	return s
 }
 
 type Rule func(s *Superpositions, x, y int) Superposition
-
-func defaultGrassRule(s *Superpositions, x, y int) Superposition {
-	sp := s.get(x, y)
-	if len(sp) == 0 || sp.collapsedValue() == nothing {
-		return Superposition{grass: 1.0}
-	}
-	return nil
-}
 
 func roadAtEdgeRule(s *Superpositions, x, y int) Superposition {
 	if x == 0 || y == 0 || x == s.m.Width-1 || y == s.m.Height-1 {
