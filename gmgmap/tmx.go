@@ -127,7 +127,8 @@ func (m Map) ToTMX(rr *rand.Rand, tmxTemplate *TMXTemplate, imgId int) error {
 	if err != nil {
 		return err
 	}
-
+	// Avoid generating many layers with the same name in one map.tmx file.
+	tmxTemplate.CSVs = make([]csvExport, 0)
 	populateTemplate(rr, m, tmxTemplate)
 
 	// Generate TMX
